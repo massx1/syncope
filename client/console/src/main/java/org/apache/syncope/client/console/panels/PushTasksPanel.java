@@ -109,7 +109,7 @@ public class PushTasksPanel extends AbstractProvisioningTasksPanel<PushTaskTO> {
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
                                 try {
-                                    restClient.startExecution(taskTO.getKey(), false);
+                                    taskRestClient.startExecution(taskTO.getKey(), false);
                                     getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                                 } catch (SyncopeClientException scce) {
                                     error(scce.getMessage());
@@ -127,7 +127,7 @@ public class PushTasksPanel extends AbstractProvisioningTasksPanel<PushTaskTO> {
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
                                 try {
-                                    restClient.startExecution(taskTO.getKey(), true);
+                                    taskRestClient.startExecution(taskTO.getKey(), true);
                                     getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                                 } catch (SyncopeClientException scce) {
                                     error(scce.getMessage());
@@ -145,7 +145,7 @@ public class PushTasksPanel extends AbstractProvisioningTasksPanel<PushTaskTO> {
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
                                 try {
-                                    restClient.delete(taskTO.getKey(), SyncTaskTO.class);
+                                    taskRestClient.delete(taskTO.getKey(), SyncTaskTO.class);
                                     info(getString(Constants.OPERATION_SUCCEEDED));
                                 } catch (SyncopeClientException scce) {
                                     error(scce.getMessage());

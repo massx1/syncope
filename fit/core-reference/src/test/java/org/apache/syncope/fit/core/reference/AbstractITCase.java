@@ -53,6 +53,7 @@ import org.apache.syncope.common.rest.api.service.CamelRouteService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.EntitlementService;
+import org.apache.syncope.common.rest.api.service.JobService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
@@ -77,7 +78,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "classpath:testJDBCContext.xml" })
+@ContextConfiguration(locations = {"classpath:testJDBCContext.xml"})
 public abstract class AbstractITCase {
 
     /**
@@ -178,8 +179,10 @@ public abstract class AbstractITCase {
     protected static PolicyService policyService;
 
     protected static SecurityQuestionService securityQuestionService;
-    
+
     protected static CamelRouteService camelRouteService;
+
+    protected static JobService jobService;
 
     @Autowired
     protected DataSource testDataSource;
@@ -232,6 +235,7 @@ public abstract class AbstractITCase {
         schemaService = adminClient.getService(SchemaService.class);
         securityQuestionService = adminClient.getService(SecurityQuestionService.class);
         camelRouteService = adminClient.getService(CamelRouteService.class);
+        jobService = adminClient.getService(JobService.class);
     }
 
     protected static String getUUIDString() {
@@ -344,12 +348,12 @@ public abstract class AbstractITCase {
         return getObject(response.getLocation(), ResourceService.class, ResourceTO.class);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes", "UseOfObsoleteCollectionType" })
+    @SuppressWarnings({"unchecked", "rawtypes", "UseOfObsoleteCollectionType"})
     protected InitialDirContext getLdapResourceDirContext(final String bindDn, final String bindPwd)
             throws NamingException {
         ResourceTO ldapRes = resourceService.read(RESOURCE_NAME_LDAP);
-        final Map<String, ConnConfProperty> ldapConnConf =
-                connectorService.read(ldapRes.getConnectorId()).getConfigurationMap();
+        final Map<String, ConnConfProperty> ldapConnConf = connectorService.read(ldapRes.getConnectorId()).
+                getConfigurationMap();
 
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");

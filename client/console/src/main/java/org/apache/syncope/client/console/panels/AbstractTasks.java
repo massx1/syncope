@@ -20,6 +20,7 @@ package org.apache.syncope.client.console.panels;
 
 import org.apache.syncope.client.console.commons.PreferenceManager;
 import org.apache.syncope.client.console.commons.XMLRolesReader;
+import org.apache.syncope.client.console.rest.JobRestClient;
 import org.apache.syncope.client.console.rest.TaskRestClient;
 import org.apache.wicket.PageReference;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -40,7 +41,10 @@ public abstract class AbstractTasks extends Panel {
     protected PageReference pageRef;
 
     @SpringBean
-    protected TaskRestClient restClient;
+    protected TaskRestClient taskRestClient;
+
+    @SpringBean
+    protected JobRestClient jobRestClient;
 
     @SpringBean
     protected PreferenceManager prefMan;

@@ -32,6 +32,7 @@ import org.apache.syncope.client.console.panels.PushTasksPanel;
 import org.apache.syncope.client.console.panels.SchedTasks;
 import org.apache.syncope.client.console.panels.SyncTasksPanel;
 import org.apache.syncope.client.console.rest.BaseRestClient;
+import org.apache.syncope.client.console.rest.JobRestClient;
 import org.apache.syncope.client.console.rest.TaskRestClient;
 import org.apache.syncope.client.console.wicket.markup.html.form.ActionLink;
 import org.apache.syncope.common.lib.to.AbstractTaskTO;
@@ -129,6 +130,8 @@ public class Tasks extends BasePage {
 
         private TaskRestClient restClient;
 
+        private JobRestClient jobRestClient;
+
         private int paginatorRows;
 
         private String id;
@@ -136,7 +139,8 @@ public class Tasks extends BasePage {
         private Class<T> reference;
 
         public TasksProvider(
-                final TaskRestClient restClient, final int paginatorRows, final String id, final Class<T> reference) {
+                final TaskRestClient restClient, final JobRestClient jobRestClient,
+                final int paginatorRows, final String id, final Class<T> reference) {
 
             super();
 
@@ -145,6 +149,7 @@ public class Tasks extends BasePage {
             comparator = new SortableDataProviderComparator<>(this);
             this.paginatorRows = paginatorRows;
             this.restClient = restClient;
+            this.jobRestClient = jobRestClient;
             this.id = id;
             this.reference = reference;
         }
@@ -213,8 +218,8 @@ public class Tasks extends BasePage {
                 columns,
                 (ISortableDataProvider<AbstractTaskTO, String>) dataProvider,
                 dataProvider.paginatorRows,
-                Arrays.asList(new ActionLink.ActionType[] {
-                    ActionLink.ActionType.DELETE, ActionLink.ActionType.DRYRUN, ActionLink.ActionType.EXECUTE }),
+                Arrays.asList(new ActionLink.ActionType[]{
+                    ActionLink.ActionType.DELETE, ActionLink.ActionType.DRYRUN, ActionLink.ActionType.EXECUTE}),
                 restClient,
                 "key",
                 TASKS,

@@ -78,13 +78,13 @@ public class PropagationTasks extends AbstractTasks {
 
         paginatorRows = prefMan.getPaginatorRows(getWebRequest(), Constants.PREF_PROPAGATION_TASKS_PAGINATOR_ROWS);
 
-        table = Tasks.updateTaskTable(
-                getColumns(),
-                new TasksProvider<PropagationTaskTO>(restClient, paginatorRows, getId(), PropagationTaskTO.class),
+        table = Tasks.updateTaskTable(getColumns(),
+                new TasksProvider<PropagationTaskTO>(taskRestClient, jobRestClient, paginatorRows, getId(),
+                        PropagationTaskTO.class),
                 container,
                 0,
                 pageRef,
-                restClient);
+                taskRestClient);
 
         window.setWindowClosedCallback(new ModalWindow.WindowClosedCallback() {
 
@@ -109,7 +109,7 @@ public class PropagationTasks extends AbstractTasks {
         @SuppressWarnings("rawtypes")
         Form paginatorForm = new Form("PaginatorForm");
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"unchecked", "rawtypes"})
         final DropDownChoice rowsChooser = new DropDownChoice(
                 "rowsChooser", new PropertyModel(this, "paginatorRows"), prefMan.getPaginatorChoices());
 
@@ -122,13 +122,13 @@ public class PropagationTasks extends AbstractTasks {
                 prefMan.set(getWebRequest(), (WebResponse) getResponse(),
                         Constants.PREF_PROPAGATION_TASKS_PAGINATOR_ROWS, String.valueOf(paginatorRows));
 
-                table = Tasks.updateTaskTable(
-                        getColumns(),
-                        new TasksProvider<>(restClient, paginatorRows, getId(), PropagationTaskTO.class),
+                table = Tasks.updateTaskTable(getColumns(),
+                        new TasksProvider<>(taskRestClient, jobRestClient, paginatorRows, getId(),
+                                PropagationTaskTO.class),
                         container,
                         table == null ? 0 : (int) table.getCurrentPage(),
                         pageRef,
-                        restClient);
+                        taskRestClient);
 
                 target.add(container);
             }
@@ -201,7 +201,7 @@ public class PropagationTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.startExecution(taskTO.getKey(), false);
+                            taskRestClient.startExecution(taskTO.getKey(), false);
                             getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());
@@ -219,7 +219,7 @@ public class PropagationTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.delete(taskTO.getKey(), PropagationTaskTO.class);
+                            taskRestClient.delete(taskTO.getKey(), PropagationTaskTO.class);
                             info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());

@@ -88,13 +88,12 @@ public abstract class AbstractProvisioningTasksPanel<T extends AbstractProvision
 
     protected void initTasksTable() {
 
-        table = Tasks.updateTaskTable(
-                getColumns(),
-                new TasksProvider<T>(restClient, paginatorRows, getId(), this.reference),
+        table = Tasks.updateTaskTable(getColumns(),
+                new TasksProvider<T>(taskRestClient, jobRestClient, paginatorRows, getId(), this.reference),
                 container,
                 0,
                 this.pageRef,
-                restClient);
+                taskRestClient);
 
         Form paginatorForm = new Form("PaginatorForm");
 
@@ -111,13 +110,12 @@ public abstract class AbstractProvisioningTasksPanel<T extends AbstractProvision
                 prefMan.set(getWebRequest(), (WebResponse) getResponse(), Constants.PREF_SYNC_TASKS_PAGINATOR_ROWS,
                         String.valueOf(paginatorRows));
 
-                table = Tasks.updateTaskTable(
-                        getColumns(),
-                        new TasksProvider<T>(restClient, paginatorRows, getId(), reference),
+                table = Tasks.updateTaskTable(getColumns(),
+                        new TasksProvider<T>(taskRestClient, jobRestClient, paginatorRows, getId(), reference),
                         container,
                         table == null ? 0 : (int) table.getCurrentPage(),
                         pageRef,
-                        restClient);
+                        taskRestClient);
 
                 target.add(container);
             }

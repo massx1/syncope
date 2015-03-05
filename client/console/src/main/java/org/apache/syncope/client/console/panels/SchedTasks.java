@@ -82,20 +82,19 @@ public class SchedTasks extends AbstractTasks {
 
         paginatorRows = prefMan.getPaginatorRows(getWebRequest(), Constants.PREF_SCHED_TASKS_PAGINATOR_ROWS);
 
-        table = Tasks.updateTaskTable(
-                getColumns(),
-                new TasksProvider<SchedTaskTO>(restClient, paginatorRows, getId(), SchedTaskTO.class),
+        table = Tasks.updateTaskTable(getColumns(),
+                new TasksProvider<SchedTaskTO>(taskRestClient, jobRestClient, paginatorRows, getId(), SchedTaskTO.class),
                 container,
                 0,
                 pageRef,
-                restClient);
+                taskRestClient);
 
         container.add(table);
 
         @SuppressWarnings("rawtypes")
         Form paginatorForm = new Form("PaginatorForm");
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"unchecked", "rawtypes"})
         final DropDownChoice rowsChooser = new DropDownChoice("rowsChooser", new PropertyModel(this, "paginatorRows"),
                 prefMan.getPaginatorChoices());
 
@@ -108,13 +107,13 @@ public class SchedTasks extends AbstractTasks {
                 prefMan.set(getWebRequest(), (WebResponse) getResponse(), Constants.PREF_SCHED_TASKS_PAGINATOR_ROWS,
                         String.valueOf(paginatorRows));
 
-                table = Tasks.updateTaskTable(
-                        getColumns(),
-                        new TasksProvider<SchedTaskTO>(restClient, paginatorRows, getId(), SchedTaskTO.class),
+                table = Tasks.updateTaskTable(getColumns(),
+                        new TasksProvider<SchedTaskTO>(taskRestClient, jobRestClient, paginatorRows, getId(),
+                                SchedTaskTO.class),
                         container,
                         table == null ? 0 : (int) table.getCurrentPage(),
                         pageRef,
-                        restClient);
+                        taskRestClient);
 
                 target.add(container);
             }
@@ -205,7 +204,7 @@ public class SchedTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.startExecution(taskTO.getKey(), false);
+                            taskRestClient.startExecution(taskTO.getKey(), false);
                             getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());
@@ -223,7 +222,7 @@ public class SchedTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.startExecution(taskTO.getKey(), true);
+                            taskRestClient.startExecution(taskTO.getKey(), true);
                             getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());
@@ -241,7 +240,7 @@ public class SchedTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.delete(taskTO.getKey(), SchedTaskTO.class);
+                            taskRestClient.delete(taskTO.getKey(), SchedTaskTO.class);
                             info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());

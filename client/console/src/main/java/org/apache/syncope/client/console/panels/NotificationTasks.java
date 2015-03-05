@@ -73,13 +73,13 @@ public class NotificationTasks extends AbstractTasks {
 
         paginatorRows = prefMan.getPaginatorRows(getWebRequest(), Constants.PREF_NOTIFICATION_TASKS_PAGINATOR_ROWS);
 
-        table = Tasks.updateTaskTable(
-                getColumns(),
-                new TasksProvider<NotificationTaskTO>(restClient, paginatorRows, getId(), NotificationTaskTO.class),
+        table = Tasks.updateTaskTable(getColumns(),
+                new TasksProvider<NotificationTaskTO>(taskRestClient, jobRestClient, paginatorRows, getId(),
+                        NotificationTaskTO.class),
                 container,
                 0,
                 pageRef,
-                restClient);
+                taskRestClient);
 
         container.add(table);
 
@@ -106,7 +106,7 @@ public class NotificationTasks extends AbstractTasks {
         @SuppressWarnings("rawtypes")
         final Form paginatorForm = new Form("PaginatorForm");
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"unchecked", "rawtypes"})
         final DropDownChoice rowsChooser = new DropDownChoice("rowsChooser", new PropertyModel(this, "paginatorRows"),
                 prefMan.getPaginatorChoices());
 
@@ -119,14 +119,13 @@ public class NotificationTasks extends AbstractTasks {
                 prefMan.set(getWebRequest(), (WebResponse) getResponse(),
                         Constants.PREF_NOTIFICATION_TASKS_PAGINATOR_ROWS, String.valueOf(paginatorRows));
 
-                table = Tasks.updateTaskTable(
-                        getColumns(),
-                        new TasksProvider<NotificationTaskTO>(restClient, paginatorRows, getId(),
+                table = Tasks.updateTaskTable(getColumns(),
+                        new TasksProvider<NotificationTaskTO>(taskRestClient, jobRestClient, paginatorRows, getId(),
                                 NotificationTaskTO.class),
                         container,
                         table == null ? 0 : (int) table.getCurrentPage(),
                         pageRef,
-                        restClient);
+                        taskRestClient);
 
                 target.add(container);
             }
@@ -191,7 +190,7 @@ public class NotificationTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.startExecution(taskTO.getKey(), false);
+                            taskRestClient.startExecution(taskTO.getKey(), false);
                             getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());
@@ -209,7 +208,7 @@ public class NotificationTasks extends AbstractTasks {
                     @Override
                     public void onClick(final AjaxRequestTarget target) {
                         try {
-                            restClient.delete(taskTO.getKey(), NotificationTaskTO.class);
+                            taskRestClient.delete(taskTO.getKey(), NotificationTaskTO.class);
                             info(getString(Constants.OPERATION_SUCCEEDED));
                         } catch (SyncopeClientException scce) {
                             error(scce.getMessage());

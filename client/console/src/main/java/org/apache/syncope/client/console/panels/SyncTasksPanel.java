@@ -18,6 +18,8 @@
  */
 package org.apache.syncope.client.console.panels;
 
+import static org.apache.wicket.markup.html.panel.Panel.PANEL;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.syncope.client.console.commons.Constants;
@@ -38,6 +40,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.StringResourceModel;
@@ -152,7 +155,7 @@ public class SyncTasksPanel extends AbstractProvisioningTasksPanel<SyncTaskTO> {
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
                                 try {
-                                    restClient.startExecution(taskTO.getKey(), false);
+                                    taskRestClient.startExecution(taskTO.getKey(), false);
                                     getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                                 } catch (SyncopeClientException scce) {
                                     error(scce.getMessage());
@@ -170,7 +173,7 @@ public class SyncTasksPanel extends AbstractProvisioningTasksPanel<SyncTaskTO> {
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
                                 try {
-                                    restClient.startExecution(taskTO.getKey(), true);
+                                    taskRestClient.startExecution(taskTO.getKey(), true);
                                     getSession().info(getString(Constants.OPERATION_SUCCEEDED));
                                 } catch (SyncopeClientException scce) {
                                     error(scce.getMessage());
@@ -188,7 +191,7 @@ public class SyncTasksPanel extends AbstractProvisioningTasksPanel<SyncTaskTO> {
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
                                 try {
-                                    restClient.delete(taskTO.getKey(), SyncTaskTO.class);
+                                    taskRestClient.delete(taskTO.getKey(), SyncTaskTO.class);
                                     info(getString(Constants.OPERATION_SUCCEEDED));
                                 } catch (SyncopeClientException scce) {
                                     error(scce.getMessage());
@@ -208,6 +211,80 @@ public class SyncTasksPanel extends AbstractProvisioningTasksPanel<SyncTaskTO> {
                         panel.add(new ActionLink() {
 
                             private static final long serialVersionUID = -7978723352517770644L;
+
+                            @Override
+                            public void onClick(final AjaxRequestTarget target) {
+                                if (target != null) {
+                                    target.add(table);
+                                }
+                            }
+                        }, ActionLink.ActionType.RELOAD, TASKS, "list");
+
+                        return panel;
+                    }
+                });
+
+        syncTaskscolumns.add(
+                new ActionColumn<AbstractTaskTO, String>(new StringResourceModel("jobs", this, null, "")) {
+
+                    private static final long serialVersionUID = 2054811145491901166L;
+
+                    @Override
+                    public ActionLinksPanel getActions(final String componentId, final IModel<AbstractTaskTO> model) {
+
+                        final SyncTaskTO taskTO = (SyncTaskTO) model.getObject();
+
+                        final ActionLinksPanel panel = new ActionLinksPanel(componentId, model, pageRef);
+
+                        panel.add(new ActionLink() {
+
+                            private static final long serialVersionUID = -3722207913631435501L;
+
+                            @Override
+                            public void onClick(final AjaxRequestTarget target) {
+                                try {
+                                    jobRestClient.pause(taskTO.getKey());
+                                    getSession().info(getString(Constants.OPERATION_SUCCEEDED));
+                                } catch (SyncopeClientException scce) {
+                                    error(scce.getMessage());
+                                }
+
+                                target.add(container);
+                                ((NotificationPanel) getPage().get(Constants.FEEDBACK)).refresh(target);
+                            }
+                        }, ActionLink.ActionType.SUSPEND, TASKS);
+
+                        panel.add(new ActionLink() {
+
+                            private static final long serialVersionUID = -3722207913631435501L;
+
+                            @Override
+                            public void onClick(final AjaxRequestTarget target) {
+                                try {
+                                    jobRestClient.pause(taskTO.getKey());
+                                    getSession().info(getString(Constants.OPERATION_SUCCEEDED));
+                                } catch (SyncopeClientException scce) {
+                                    error(scce.getMessage());
+                                }
+
+                                target.add(container);
+                                ((NotificationPanel) getPage().get(Constants.FEEDBACK)).refresh(target);
+                            }
+                        }, ActionLink.ActionType.REACTIVATE, TASKS);
+
+                        panel.add(new Label("jobStatus", jobRestClient.status(taskTO.getKey())));
+
+                        //bulkActions.add(ActionType.DELETE);
+                        return panel;
+                    }
+
+                    @Override
+                    public Component getHeader(final String componentId) {
+                        final ActionLinksPanel panel = new ActionLinksPanel(componentId, new Model(), pageRef);
+
+                        panel.add(new ActionLink() {
+
+                            private static final long serialVersionUID = -3722207913631435501L;
 
                             @Override
                             public void onClick(final AjaxRequestTarget target) {
