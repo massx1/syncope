@@ -27,6 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.apache.syncope.common.lib.to.JobTO;
 
 @Path("jobs")
 public interface JobService extends JAXRSService {
@@ -53,6 +54,6 @@ public interface JobService extends JAXRSService {
     @GET
     @Path("status/{jobKey}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    String status(@NotNull @PathParam("jobKey") Long jobKey);
+    JobTO status(@NotNull @PathParam("jobKey") Long jobKey);
 
 }

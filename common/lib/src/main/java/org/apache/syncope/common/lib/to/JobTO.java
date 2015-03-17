@@ -28,4 +28,59 @@ public class JobTO extends AbstractBaseBean {
 
     private static final long serialVersionUID = -7254450981751326711L;
 
+    private Long taskKey;
+
+    private String jobName;
+
+    private String triggerName;
+
+    private String triggerStatus;
+
+    public JobTO() {
+    }
+
+    public JobTO(final Long taskKey, final String jobName, final String triggerName, final String triggerStatus) {
+        this.taskKey = taskKey;
+        this.jobName = jobName;
+        this.triggerName = triggerName;
+        this.triggerStatus = triggerStatus;
+    }
+
+    public Long getTaskKey() {
+        return taskKey;
+    }
+
+    public void setTaskKey(final Long taskKey) {
+        this.taskKey = taskKey;
+    }
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public void setJobName(final String jobName) {
+        this.jobName = jobName;
+    }
+
+    public String getTriggerName() {
+        return triggerName;
+    }
+
+    public void setTriggerName(final String triggerName) {
+        this.triggerName = triggerName;
+    }
+
+    public String getTriggerStatus() {
+        return triggerStatus;
+    }
+
+    public void setTriggerStatus(final String triggerStatus) {
+        this.triggerStatus = triggerStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "JobTO{" + "taskKey=" + taskKey + ", jobName=" + jobName + ", triggerName=" + triggerName
+                + ", triggerStatus=" + triggerStatus + '}';
+    }
 }

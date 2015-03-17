@@ -19,6 +19,7 @@
 package org.apache.syncope.core.rest.cxf.service;
 
 import java.util.List;
+import org.apache.syncope.common.lib.to.JobTO;
 import org.apache.syncope.common.rest.api.service.JobService;
 import org.apache.syncope.core.logic.quartz.JobLogic;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ public class JobServiceImpl extends AbstractServiceImpl implements JobService {
     }
 
     @Override
-    public String status(final Long jobKey) {
+    public JobTO status(final Long jobKey) {
         return jobLogic.status(jobKey);
     }
 

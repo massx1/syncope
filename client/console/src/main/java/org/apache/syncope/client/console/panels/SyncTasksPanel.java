@@ -18,8 +18,6 @@
  */
 package org.apache.syncope.client.console.panels;
 
-import static org.apache.wicket.markup.html.panel.Panel.PANEL;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.syncope.client.console.commons.Constants;

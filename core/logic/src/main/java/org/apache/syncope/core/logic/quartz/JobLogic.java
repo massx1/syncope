@@ -18,10 +18,9 @@
  */
 package org.apache.syncope.core.logic.quartz;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.apache.syncope.common.lib.SyncopeClientException;
+import org.apache.syncope.common.lib.to.JobTO;
 import org.apache.syncope.common.lib.types.ClientExceptionType;
 import org.apache.syncope.core.persistence.api.dao.TaskDAO;
 import org.apache.syncope.core.persistence.api.entity.task.Task;
@@ -44,14 +43,9 @@ public class JobLogic {
     private TaskDAO taskDAO;
 
     public List<String> listAllJob() {
-        final List<String> list = new ArrayList<>();
-
+        List<String> list;
         try {
-            for (Map.Entry<String, String> entrySet : client.jobsMap().entrySet()) {
-                String key = entrySet.getKey();
-                String value = entrySet.getValue();
-                list.add(key);
-            }
+            list = client.jobsMap();
         } catch (final SchedulerException ex) {
             LOG.error("Impossible to list all Job");
             final SyncopeClientException sce = SyncopeClientException.build(ClientExceptionType.Unknown);
@@ -117,16 +111,11 @@ public class JobLogic {
         }
     }
 
-    public String status(final Long jobKey) {
-        LOG.debug("Pause task key {}", jobKey);
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + jobKey);
+    public JobTO status(final Long jobKey) {
+        LOG.info("Status task key {}", jobKey);
 
         final Task task = taskDAO.find(jobKey);
-
         try {
-
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + JobNamer.getJobName(task));
-
             client.checkIfJobExist(JobNamer.getJobName(task));
             LOG.debug("Job exists");
         } catch (final SchedulerException e) {
@@ -137,9 +126,11 @@ public class JobLogic {
         }
 
         final String triggerName = JobNamer.getTriggerName(JobNamer.getJobName(task));
-
+        System.out.println(">>>>> JOB NAME: " + JobNamer.getJobName(task));
+        System.out.println(">>>>> TRIGGER NAME: " + triggerName);
         String triggerStatus;
         try {
+            client.jobsTrigger(JobNamer.getJobName(task));
             LOG.debug("Pause trigger {}", triggerName);
             triggerStatus = client.triggerStatus(triggerName);
         } catch (final SchedulerException ex) {
@@ -148,7 +139,10 @@ public class JobLogic {
             sce.getElements().add(ex.getMessage());
             throw sce;
         }
-        return triggerStatus;
+
+        final JobTO jobTO = new JobTO(jobKey, JobNamer.getJobName(task), triggerName, triggerStatus);
+
+        return jobTO;
     }
 
 }

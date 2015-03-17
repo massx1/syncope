@@ -21,18 +21,29 @@ package org.apache.syncope.fit.core.reference;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import org.apache.syncope.common.lib.to.AbstractTaskTO;
+import org.apache.syncope.common.lib.to.JobTO;
+import org.apache.syncope.common.lib.types.TaskType;
 import org.junit.Test;
 
-public class JobITCase extends AbstractITCase {
+public class JobITCase extends AbstractTaskITCase {
 
     @Test
-    public void getPropagationActionsClasses() {
+    public void listAllJobs() throws InterruptedException {
         final List<String> jobs = jobService.getJobs();
-        
+
         assertEquals(23, jobs.size());
-        
-        for (final String job : jobs) {
-            System.out.println(">>>>>>>>>>>>>> " + job);
+    }
+
+    @Test
+    public void status() {
+        for (final AbstractTaskTO abstractTaskTO : taskService.list(TaskType.SYNCHRONIZATION).getResult()) {
+            execSyncTask(abstractTaskTO.getKey(), 50, false);
+        }
+
+        for (final AbstractTaskTO abstractTaskTO : taskService.list(TaskType.SYNCHRONIZATION).getResult()) {
+            final JobTO jobTO = jobService.status(abstractTaskTO.getKey());
+            System.out.println("JOB_TO: " + jobTO.toString());
         }
     }
 }

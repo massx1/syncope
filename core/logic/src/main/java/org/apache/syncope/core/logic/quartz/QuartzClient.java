@@ -18,13 +18,13 @@
  */
 package org.apache.syncope.core.logic.quartz;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,18 +36,18 @@ public class QuartzClient {
     @Autowired
     private Scheduler scheduler;
 
-    public List<String> jobGroups() throws SchedulerException {
-        return scheduler.getJobGroupNames();
-    }
-
-    public Map<String, String> jobsMap() throws SchedulerException {
-        final Map<String, String> jobsMap = new HashMap<>();
+    public List<String> jobsMap() throws SchedulerException {
+        final List<String> jobsName = new ArrayList<>();
         for (final String groupName : jobGroups()) {
             for (final JobKey jobKey : scheduler.getJobKeys(GroupMatcher.jobGroupEquals(groupName))) {
-                jobsMap.put(jobKey.getName(), jobKey.getGroup());
+                jobsName.add(jobKey.getName());
             }
         }
-        return jobsMap;
+        return jobsName;
+    }
+
+    private List<String> jobGroups() throws SchedulerException {
+        return scheduler.getJobGroupNames();
     }
 
     public boolean checkIfJobExist(final String jobName) throws SchedulerException {
@@ -75,7 +75,13 @@ public class QuartzClient {
     }
 
     public String triggerStatus(final String triggerName) throws SchedulerException {
+        System.out.println("> > > > > > " + triggerName);
+        System.out.println("> > > > > > " + TriggerKey.triggerKey(triggerName));
         return scheduler.getTriggerState(TriggerKey.triggerKey(triggerName)).toString();
+    }
+
+    public List<? extends Trigger> jobsTrigger(final String jobName) throws SchedulerException {
+        return scheduler.getTriggersOfJob(JobKey.jobKey(jobName));
     }
 //    public TriggerKey triggerName(final JobKey jobKey) throws SchedulerException {
 //        final List<? extends Trigger> triggersOfJob = scheduler.getTriggersOfJob(jobKey);
@@ -85,9 +91,7 @@ public class QuartzClient {
 //    public CronTrigger trigger(final TriggerKey triggerKey) throws SchedulerException {
 //        return (CronTrigger) scheduler.getTrigger(triggerKey);
 //    }
-//
-//    
-//    
+
 //    public void pauseAll() throws SchedulerException {
 //        scheduler.pauseAll();
 //    }

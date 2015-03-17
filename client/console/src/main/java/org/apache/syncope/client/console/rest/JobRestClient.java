@@ -18,6 +18,7 @@
  */
 package org.apache.syncope.client.console.rest;
 
+import org.apache.syncope.common.lib.to.JobTO;
 import org.apache.syncope.common.rest.api.service.JobService;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +39,7 @@ public class JobRestClient extends BaseRestClient {
         getService(JobService.class).resume(id);
     }
     
-    public String status(final Long id) {
+    public JobTO status(final Long id) {
         return getService(JobService.class).status(id);
     }
 
