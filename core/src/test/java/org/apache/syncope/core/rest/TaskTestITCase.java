@@ -73,6 +73,8 @@ import org.apache.syncope.common.types.AttributeSchemaType;
 import org.apache.syncope.common.types.CipherAlgorithm;
 import org.apache.syncope.common.types.ConnConfProperty;
 import org.apache.syncope.common.types.IntMappingType;
+import org.apache.syncope.common.types.JobAction;
+import org.apache.syncope.common.types.JobStatusType;
 import org.apache.syncope.common.types.MappingPurpose;
 import org.apache.syncope.common.types.MatchingRule;
 import org.apache.syncope.common.types.PropagationTaskExecStatus;
@@ -85,6 +87,7 @@ import org.apache.syncope.common.types.UnmatchingRule;
 import org.apache.syncope.common.util.CollectionWrapper;
 import org.apache.syncope.common.wrap.PushActionClass;
 import org.apache.syncope.common.wrap.ResourceName;
+import org.apache.syncope.core.quartz.TestSampleJob;
 import org.apache.syncope.core.sync.TestSyncActions;
 import org.apache.syncope.core.sync.TestSyncRule;
 import org.apache.syncope.core.sync.impl.DBPasswordSyncActions;
@@ -109,7 +112,7 @@ public class TaskTestITCase extends AbstractTest {
 
     @BeforeClass
     public static void testSyncActionsSetup() {
-        SyncTaskTO syncTask = taskService.read(SYNC_TASK_ID);
+        SyncTaskTO syncTask = taskService.read(SYNC_TASK_ID, true);
         syncTask.getActionsClassNames().add(TestSyncActions.class.getName());
         taskService.update(SYNC_TASK_ID, syncTask);
     }
@@ -171,7 +174,7 @@ public class TaskTestITCase extends AbstractTest {
         SyncTaskTO actual = getObject(response.getLocation(), TaskService.class, SyncTaskTO.class);
         assertNotNull(actual);
 
-        task = taskService.read(actual.getId());
+        task = taskService.read(actual.getId(), true);
         assertNotNull(task);
         assertEquals(actual.getId(), task.getId());
         assertEquals(actual.getJobClassName(), task.getJobClassName());
@@ -194,7 +197,7 @@ public class TaskTestITCase extends AbstractTest {
         final PushTaskTO actual = getObject(response.getLocation(), TaskService.class, PushTaskTO.class);
         assertNotNull(actual);
 
-        task = taskService.read(actual.getId());
+        task = taskService.read(actual.getId(), true);
         assertNotNull(task);
         assertEquals(task.getId(), actual.getId());
         assertEquals(task.getJobClassName(), actual.getJobClassName());
@@ -206,7 +209,7 @@ public class TaskTestITCase extends AbstractTest {
 
     @Test
     public void update() {
-        SchedTaskTO task = taskService.read(SCHED_TASK_ID);
+        SchedTaskTO task = taskService.read(SCHED_TASK_ID, true);
         assertNotNull(task);
 
         final SchedTaskTO taskMod = new SchedTaskTO();
@@ -214,7 +217,7 @@ public class TaskTestITCase extends AbstractTest {
         taskMod.setCronExpression(null);
 
         taskService.update(taskMod.getId(), taskMod);
-        SchedTaskTO actual = taskService.read(taskMod.getId());
+        SchedTaskTO actual = taskService.read(taskMod.getId(), true);
         assertNotNull(actual);
         assertEquals(task.getId(), actual.getId());
         assertNull(actual.getCronExpression());
@@ -282,13 +285,13 @@ public class TaskTestITCase extends AbstractTest {
 
     @Test
     public void read() {
-        final PropagationTaskTO taskTO = taskService.read(3L);
+        final PropagationTaskTO taskTO = taskService.read(3L, true);
 
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
         assertTrue(taskTO.getExecutions().isEmpty());
 
-        final PushTaskTO pushTaskTO = taskService.<PushTaskTO>read(17L);
+        final PushTaskTO pushTaskTO = taskService.<PushTaskTO>read(17L, true);
         assertEquals(UnmatchingRule.ASSIGN, pushTaskTO.getUnmatchingRule());
         assertEquals(MatchingRule.UPDATE, pushTaskTO.getMatchingRule());
     }
@@ -382,17 +385,32 @@ public class TaskTestITCase extends AbstractTest {
             assertEquals(1, userTO.getMemberships().size());
             assertTrue(userTO.getMemberships().get(0).getAttrMap().containsKey("subscriptionDate"));
 
-            // Unmatching --> Assign (link)
+            // Unmatching --> Assign (link) - SYNCOPE-658
             assertTrue(userTO.getResources().contains(RESOURCE_NAME_CSV));
+            int counter = 0;
+            for (AttributeTO attributeTO : userTO.getDerAttrs()) {
+                if ("csvuserid".equals(attributeTO.getSchema())) {
+                    counter++;
+                }
+            }
+            assertEquals(1, counter);
 
             userTO = readUser("test8");
             assertNotNull(userTO);
             assertEquals("TYPE_8", userTO.getAttrMap().get("type").getValues().get(0));
 
+            // Check for ignored user - SYNCOPE-663
+            try {
+                readUser("test2");
+                fail();
+            } catch (SyncopeClientException e) {
+                assertEquals(Response.Status.NOT_FOUND, e.getType().getResponseStatus());
+            }
+
             // check for sync results
             int usersPost = userService.list(1, 1).getTotalCount();
             assertNotNull(usersPost);
-            assertEquals(usersPre + 9, usersPost);
+            assertEquals(usersPre + 8, usersPost);
 
             // Check for issue 215:
             // * expected disabled user test1
@@ -559,7 +577,7 @@ public class TaskTestITCase extends AbstractTest {
             } catch (InterruptedException e) {
             }
 
-            taskTO = taskService.read(taskTO.getId());
+            taskTO = taskService.read(taskTO.getId(), true);
 
             assertNotNull(taskTO);
             assertNotNull(taskTO.getExecutions());
@@ -589,7 +607,7 @@ public class TaskTestITCase extends AbstractTest {
             assertNotNull(execution);
 
             // 4. verify
-            taskTO = taskService.read(taskTO.getId());
+            taskTO = taskService.read(taskTO.getId(), true);
             assertNotNull(taskTO);
             assertEquals(1, taskTO.getExecutions().size());
         } finally {
@@ -691,13 +709,13 @@ public class TaskTestITCase extends AbstractTest {
             //-----------------------------
 
             // Update sync task
-            SyncTaskTO task = taskService.read(9L);
+            SyncTaskTO task = taskService.read(9L, true);
             assertNotNull(task);
 
             task.setUserTemplate(template);
 
             taskService.update(task.getId(), task);
-            SyncTaskTO actual = taskService.read(task.getId());
+            SyncTaskTO actual = taskService.read(task.getId(), true);
             assertNotNull(actual);
             assertEquals(task.getId(), actual.getId());
             assertFalse(actual.getUserTemplate().getResources().isEmpty());
@@ -732,7 +750,7 @@ public class TaskTestITCase extends AbstractTest {
         assertEquals("issueSYNCOPE144", actual.getName());
         assertEquals("issueSYNCOPE144 Description", actual.getDescription());
 
-        task = taskService.read(actual.getId());
+        task = taskService.read(actual.getId(), true);
         assertNotNull(task);
         assertEquals("issueSYNCOPE144", task.getName());
         assertEquals("issueSYNCOPE144 Description", task.getDescription());
@@ -774,7 +792,7 @@ public class TaskTestITCase extends AbstractTest {
     }
 
     private TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds, final boolean dryRun) {
-        AbstractTaskTO taskTO = taskService.read(taskId);
+        AbstractTaskTO taskTO = taskService.read(taskId, true);
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
 
@@ -792,7 +810,7 @@ public class TaskTestITCase extends AbstractTest {
             } catch (InterruptedException e) {
             }
 
-            taskTO = taskService.read(taskTO.getId());
+            taskTO = taskService.read(taskTO.getId(), true);
 
             assertNotNull(taskTO);
             assertNotNull(taskTO.getExecutions());
@@ -899,7 +917,7 @@ public class TaskTestITCase extends AbstractTest {
 
         execSyncTask(actual.getId(), 50, false);
 
-        SyncTaskTO executed = taskService.read(actual.getId());
+        SyncTaskTO executed = taskService.read(actual.getId(), true);
         assertEquals(1, executed.getExecutions().size());
 
         // asser for just one match
@@ -926,7 +944,7 @@ public class TaskTestITCase extends AbstractTest {
         assertEquals("virtualvalue", userTO.getVirAttrMap().get("virtualdata").getValues().get(0));
 
         // Update sync task
-        SyncTaskTO task = taskService.read(12L);
+        SyncTaskTO task = taskService.read(12L, true);
         assertNotNull(task);
 
         //  add user template
@@ -1177,7 +1195,7 @@ public class TaskTestITCase extends AbstractTest {
         SyncTaskTO actual = getObject(taskResponse.getLocation(), TaskService.class, SyncTaskTO.class);
         assertNotNull(actual);
 
-        syncTask = taskService.read(actual.getId());
+        syncTask = taskService.read(actual.getId(), true);
         assertNotNull(syncTask);
         assertEquals(actual.getId(), syncTask.getId());
         assertEquals(actual.getJobClassName(), syncTask.getJobClassName());
@@ -1225,8 +1243,7 @@ public class TaskTestITCase extends AbstractTest {
         assertEquals(encodedNewPassword, updatedUser.getPassword());
 
         // 4. Check that the LDAP resource has the old password
-        ConnObjectTO connObject =
-                resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, user.getId());
+        ConnObjectTO connObject = resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, user.getId());
         assertNotNull(getLdapRemoteObject(
                 connObject.getAttrMap().get(Name.NAME).getValues().get(0),
                 "security",
@@ -1253,7 +1270,7 @@ public class TaskTestITCase extends AbstractTest {
         SyncTaskTO actual = getObject(taskResponse.getLocation(), TaskService.class, SyncTaskTO.class);
         assertNotNull(actual);
 
-        syncTask = taskService.read(actual.getId());
+        syncTask = taskService.read(actual.getId(), true);
         assertNotNull(syncTask);
         assertEquals(actual.getId(), syncTask.getId());
         assertEquals(actual.getJobClassName(), syncTask.getJobClassName());
@@ -1384,5 +1401,193 @@ public class TaskTestITCase extends AbstractTest {
                 resourceService.delete(resourceName);
             }
         }
+    }
+
+    @Test
+    public void issueSYNCOPE648() {
+        //1. Create Push Task
+        final PushTaskTO task = new PushTaskTO();
+        task.setName("Test create Push");
+        task.setResource(RESOURCE_NAME_LDAP);
+        task.setUserFilter(
+                SyncopeClient.getUserSearchConditionBuilder().is("username").equalTo("_NO_ONE_").query());
+        task.setRoleFilter(
+                SyncopeClient.getRoleSearchConditionBuilder().is("name").equalTo("citizen").query());
+        task.setMatchingRule(MatchingRule.IGNORE);
+        task.setUnmatchingRule(UnmatchingRule.IGNORE);
+
+        final Response response = taskService.create(task);
+        final PushTaskTO actual = getObject(response.getLocation(), TaskService.class, PushTaskTO.class);
+        assertNotNull(actual);
+
+        // 2. Create notification
+        NotificationTO notification = new NotificationTO();
+        notification.setTraceLevel(TraceLevel.FAILURES);
+        notification.getEvents().add("[PushTask]:[role]:[resource-ldap]:[matchingrule_ignore]:[SUCCESS]");
+        notification.getEvents().add("[PushTask]:[role]:[resource-ldap]:[unmatchingrule_ignore]:[SUCCESS]");
+
+        notification.getStaticRecipients().add("issueyncope648@syncope.apache.org");
+        notification.setSelfAsRecipient(false);
+        notification.setRecipientAttrName("email");
+        notification.setRecipientAttrType(IntMappingType.UserSchema);
+
+        notification.setSender("syncope648@syncope.apache.org");
+        String subject = "Test notification";
+        notification.setSubject(subject);
+        notification.setTemplate("optin");
+        notification.setActive(true);
+
+        Response responseNotification = notificationService.create(notification);
+        notification = getObject(responseNotification.getLocation(), NotificationService.class, NotificationTO.class);
+        assertNotNull(notification);
+
+        execSyncTask(actual.getId(), 50, false);
+
+        NotificationTaskTO taskTO = findNotificationTaskBySender("syncope648@syncope.apache.org");
+        assertNotNull(taskTO);
+    }
+
+    @Test
+    public void issueSYNCOPE660() {
+        List<TaskExecTO> list = taskService.listJobs(JobStatusType.ALL);
+        int old_size = list.size();
+
+        SchedTaskTO task = new SchedTaskTO();
+        task.setName("issueSYNCOPE660");
+        task.setDescription("issueSYNCOPE660 Description");
+        task.setJobClassName(TestSampleJob.class.getName());
+
+        Response response = taskService.create(task);
+        task = getObject(response.getLocation(), TaskService.class, SchedTaskTO.class);
+
+        list = taskService.listJobs(JobStatusType.ALL);
+        assertEquals(old_size + 1, list.size());
+
+        taskService.actionJob(task.getId(), JobAction.START);
+
+        int i = 0, maxit = 50;
+
+        do {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+
+            list = taskService.listJobs(JobStatusType.RUNNING);
+            assertNotNull(list);
+            i++;
+        } while (list.size() < 1 && i < maxit);
+
+        assertEquals(1, list.size());
+        assertEquals(task.getId(), list.get(0).getTask());
+
+        taskService.actionJob(task.getId(), JobAction.STOP);
+
+        i = 0;
+
+        do {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+
+            list = taskService.listJobs(JobStatusType.RUNNING);
+            assertNotNull(list);
+            i++;
+        } while (list.size() >= 1 && i < maxit);
+
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void issueSYNCOPE739() {
+        // First of all, clear any potential conflict with existing user / role
+        ldapCleanup();
+
+        SyncTaskTO task = taskService.read(11L, true);
+        assertNotNull(task);
+        assertEquals(11L, task.getId());
+
+        task.setUnmatchingRule(UnmatchingRule.ASSIGN);
+
+        UserTO userTemplate = new UserTO();
+        userTemplate.getResources().add(RESOURCE_NAME_DBVIRATTR);
+
+        task.setUserTemplate(userTemplate);
+
+        Response response = taskService.create(task);
+        SyncTaskTO actual = getObject(response.getLocation(), TaskService.class, SyncTaskTO.class);
+        assertNotNull(actual);
+
+        task = taskService.read(actual.getId(), true);
+        assertNotNull(task);
+        assertEquals(actual.getId(), task.getId());
+        assertEquals(actual.getJobClassName(), task.getJobClassName());
+
+        // Create sync task
+        TaskExecTO execution = execSyncTask(task.getId(), 50, false);
+
+        // verify execution status
+        final String status = execution.getStatus();
+        assertNotNull(status);
+        assertTrue(PropagationTaskExecStatus.valueOf(status).isSuccessful());
+
+        UserTO userTO = readUser("syncFromLDAP");
+        assertNotNull(userTO);
+        assertEquals("syncFromLDAP",
+                userTO.getVirAttrMap().get("virtualPropagation").getValues().get(0));
+
+        ConnObjectTO connObj = resourceService.getConnectorObject(RESOURCE_NAME_DBVIRATTR, SubjectType.USER, userTO.
+                getId());
+        assertNotNull(connObj);
+        assertEquals("syncFromLDAP", connObj.getAttrMap().get("SURNAME").getValues().get(0));
+
+        // update virtual attribute directly
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(testDataSource);
+
+        String value = jdbcTemplate.queryForObject(
+                "SELECT SURNAME FROM testsync WHERE ID=?", String.class, userTO.getId());
+        assertEquals("syncFromLDAP", value);
+
+        jdbcTemplate.update("UPDATE testsync set SURNAME=null WHERE ID=?", userTO.getId());
+
+        value = jdbcTemplate.queryForObject(
+                "SELECT SURNAME FROM testsync WHERE ID=?", String.class, userTO.getId());
+        assertNull(value);
+
+        // Update sync task
+        execution = execSyncTask(task.getId(), 50, false);
+        assertNotNull(execution.getStatus());
+        assertTrue(PropagationTaskExecStatus.valueOf(execution.getStatus()).isSuccessful());
+
+        userTO = readUser("syncFromLDAP");
+        assertNotNull(userTO);
+        assertEquals("syncFromLDAP", userTO.getVirAttrMap().get("virtualPropagation").getValues().get(0));
+
+        connObj = resourceService.getConnectorObject(RESOURCE_NAME_DBVIRATTR, SubjectType.USER, userTO.getId());
+        assertNotNull(connObj);
+        assertEquals("syncFromLDAP", connObj.getAttrMap().get("SURNAME").getValues().get(0));
+
+        // delete the created sync task
+        taskService.delete(task.getId());
+
+    }
+
+    @Test
+    public void issueSYNCOPE741() {
+        ldapCleanup();
+
+        SyncTaskTO task = taskService.read(11L, false);
+        assertNotNull(task);
+        assertEquals(11L, task.getId());
+        assertTrue(task.getExecutions().isEmpty());
+
+        task = taskService.read(11L, true);
+        assertNotNull(task);
+        assertEquals(11L, task.getId());
+        assertFalse(task.getExecutions().isEmpty());
+        assertEquals(1, task.getExecutions().size());
     }
 }

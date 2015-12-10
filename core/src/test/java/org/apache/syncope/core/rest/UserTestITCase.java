@@ -168,7 +168,7 @@ public class UserTestITCase extends AbstractTest {
         assertTrue(newMaxId > maxId);
 
         // get last task
-        PropagationTaskTO taskTO = taskService.read(newMaxId);
+        PropagationTaskTO taskTO = taskService.read(newMaxId, true);
 
         assertNotNull(taskTO);
         assertTrue(taskTO.getExecutions().isEmpty());
@@ -370,7 +370,7 @@ public class UserTestITCase extends AbstractTest {
         assertFalse(tasks.getResult().isEmpty());
 
         long maxId = getMaxTaskId(tasks.getResult());
-        PropagationTaskTO taskTO = taskService.read(maxId);
+        PropagationTaskTO taskTO = taskService.read(maxId, true);
 
         assertNotNull(taskTO);
         int maxTaskExecutions = taskTO.getExecutions().size();
@@ -432,7 +432,7 @@ public class UserTestITCase extends AbstractTest {
         assertEquals(newMaxId, maxId);
 
         // get last task
-        taskTO = taskService.read(newMaxId);
+        taskTO = taskService.read(newMaxId, true);
 
         assertNotNull(taskTO);
         assertEquals(maxTaskExecutions, taskTO.getExecutions().size());
@@ -807,7 +807,7 @@ public class UserTestITCase extends AbstractTest {
         // all update executions have to be registered
         assertTrue(newMaxId > maxId);
 
-        final PropagationTaskTO taskTO = taskService.read(newMaxId);
+        final PropagationTaskTO taskTO = taskService.read(newMaxId, true);
 
         assertNotNull(taskTO);
         assertEquals(1, taskTO.getExecutions().size());
@@ -1149,8 +1149,8 @@ public class UserTestITCase extends AbstractTest {
         assertNotNull(actual);
         assertNotNull(actual.getDerAttrMap().get("csvuserid"));
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.
+                getId());
         assertNotNull(connObjectTO);
         assertEquals("sx-dx", connObjectTO.getAttrMap().get("ROLE").getValues().get(0));
     }
@@ -1177,8 +1177,8 @@ public class UserTestITCase extends AbstractTest {
         assertNotNull(actual);
         assertNotNull(actual.getDerAttrMap().get("csvuserid"));
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.
+                getId());
         assertNotNull(connObjectTO);
         assertEquals("sx-dx", connObjectTO.getAttrMap().get("MEMBERSHIP").getValues().get(0));
     }
@@ -1238,8 +1238,8 @@ public class UserTestITCase extends AbstractTest {
         assertEquals(2, actual.getMemberships().size());
         assertEquals(1, actual.getResources().size());
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.
+                getId());
         assertNotNull(connObjectTO);
 
         // -----------------------------------
@@ -1320,8 +1320,8 @@ public class UserTestITCase extends AbstractTest {
         assertNotNull(actual);
         assertEquals(2, actual.getMemberships().size());
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, actual.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, actual.
+                getId());
         assertNotNull(connObjectTO);
 
         AttributeTO postalAddress = connObjectTO.getAttrMap().get("postalAddress");
@@ -1432,8 +1432,8 @@ public class UserTestITCase extends AbstractTest {
         assertEquals(RESOURCE_NAME_DBVIRATTR, userTO.getPropagationStatusTOs().get(0).getResource());
         assertEquals(PropagationTaskExecStatus.SUBMITTED, userTO.getPropagationStatusTOs().get(0).getStatus());
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_DBVIRATTR, SubjectType.USER, userTO.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_DBVIRATTR, SubjectType.USER,
+                userTO.getId());
         assertNotNull(connObjectTO);
         assertEquals("virtualvalue", connObjectTO.getAttrMap().get("USERNAME").getValues().get(0));
         // ----------------------------------
@@ -1552,38 +1552,40 @@ public class UserTestITCase extends AbstractTest {
         pwdCipherAlgo.getValues().set(0, "AES");
         configurationService.set(pwdCipherAlgo.getSchema(), pwdCipherAlgo);
 
-        // 3. create user with no resources
-        UserTO userTO = getUniqueSampleTO("syncope136_AES@apache.org");
-        userTO.getResources().clear();
+        try {
+            // 3. create user with no resources
+            UserTO userTO = getUniqueSampleTO("syncope136_AES@apache.org");
+            userTO.getResources().clear();
 
-        userTO = createUser(userTO);
-        assertNotNull(userTO);
+            userTO = createUser(userTO);
+            assertNotNull(userTO);
 
-        // 4. update user, assign a propagation primary resource but don't provide any password
-        UserMod userMod = new UserMod();
-        userMod.setId(userTO.getId());
-        userMod.getResourcesToAdd().add(RESOURCE_NAME_WS1);
+            // 4. update user, assign a propagation primary resource but don't provide any password
+            UserMod userMod = new UserMod();
+            userMod.setId(userTO.getId());
+            userMod.getResourcesToAdd().add(RESOURCE_NAME_WS1);
 
-        final StatusMod st = new StatusMod();
-        st.setOnSyncope(false);
-        st.getResourceNames().add(RESOURCE_NAME_WS1);
-        userMod.setPwdPropRequest(st);
+            final StatusMod st = new StatusMod();
+            st.setOnSyncope(false);
+            st.getResourceNames().add(RESOURCE_NAME_WS1);
+            userMod.setPwdPropRequest(st);
 
-        userTO = updateUser(userMod);
-        assertNotNull(userTO);
+            userTO = updateUser(userMod);
+            assertNotNull(userTO);
 
-        // 5. verify that propagation was successful
-        List<PropagationStatus> props = userTO.getPropagationStatusTOs();
-        assertNotNull(props);
-        assertEquals(1, props.size());
-        PropagationStatus prop = props.iterator().next();
-        assertNotNull(prop);
-        assertEquals(RESOURCE_NAME_WS1, prop.getResource());
-        assertEquals(PropagationTaskExecStatus.SUBMITTED, prop.getStatus());
-
-        // 6. restore initial cipher algorithm
-        pwdCipherAlgo.getValues().set(0, origpwdCipherAlgo);
-        configurationService.set(pwdCipherAlgo.getSchema(), pwdCipherAlgo);
+            // 5. verify that propagation was successful
+            List<PropagationStatus> props = userTO.getPropagationStatusTOs();
+            assertNotNull(props);
+            assertEquals(1, props.size());
+            PropagationStatus prop = props.iterator().next();
+            assertNotNull(prop);
+            assertEquals(RESOURCE_NAME_WS1, prop.getResource());
+            assertEquals(PropagationTaskExecStatus.SUBMITTED, prop.getStatus());
+        } finally {
+            // restore initial cipher algorithm
+            pwdCipherAlgo.getValues().set(0, origpwdCipherAlgo);
+            configurationService.set(pwdCipherAlgo.getSchema(), pwdCipherAlgo);
+        }
     }
 
     @Test
@@ -1631,8 +1633,8 @@ public class UserTestITCase extends AbstractTest {
         UserTO actual = createUser(userTO);
         assertNotNull(actual);
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, actual.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(
+                RESOURCE_NAME_CSV, SubjectType.USER, actual.getId());
         assertNull(connObjectTO.getAttrMap().get("email"));
     }
 
@@ -1673,14 +1675,14 @@ public class UserTestITCase extends AbstractTest {
         assertEquals(10, res.getResultByStatus(Status.SUCCESS).size());
         assertEquals(1, res.getResultByStatus(Status.FAILURE).size());
         assertEquals("suspended", userService.read(
-                Long.parseLong(res.getResultByStatus(Status.SUCCESS).get(3).toString())).getStatus());
+                Long.parseLong(res.getResultByStatus(Status.SUCCESS).get(3))).getStatus());
 
         bulkAction.setOperation(BulkAction.Type.REACTIVATE);
         res = userService.bulk(bulkAction);
         assertEquals(10, res.getResultByStatus(Status.SUCCESS).size());
         assertEquals(1, res.getResultByStatus(Status.FAILURE).size());
         assertEquals("active", userService.read(
-                Long.parseLong(res.getResultByStatus(Status.SUCCESS).get(3).toString())).getStatus());
+                Long.parseLong(res.getResultByStatus(Status.SUCCESS).get(3))).getStatus());
 
         bulkAction.setOperation(BulkAction.Type.DELETE);
         res = userService.bulk(bulkAction);
@@ -2203,8 +2205,8 @@ public class UserTestITCase extends AbstractTest {
         assertNotNull(userTO);
 
         // 2. read resource configuration for LDAP binding
-        ConnObjectTO connObject =
-                resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, userTO.getId());
+        ConnObjectTO connObject = resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, userTO.
+                getId());
 
         // 3. try (and succeed) to perform simple LDAP binding with provided password ('password123')
         assertNotNull(getLdapRemoteObject(
@@ -2372,8 +2374,7 @@ public class UserTestITCase extends AbstractTest {
         assertEquals(1, user.getResources().size());
 
         // 4. Check that the LDAP resource has the correct password
-        ConnObjectTO connObject =
-                resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, user.getId());
+        ConnObjectTO connObject = resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, user.getId());
 
         assertNotNull(getLdapRemoteObject(
                 connObject.getAttrMap().get(Name.NAME).getValues().get(0),
@@ -2414,8 +2415,8 @@ public class UserTestITCase extends AbstractTest {
         userTO = createUser(userTO, false);
         assertNotNull(userTO);
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, userTO.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, userTO.
+                getId());
         assertNotNull(connObjectTO);
 
         // check if password has not changed
@@ -2435,8 +2436,7 @@ public class UserTestITCase extends AbstractTest {
         userTO = createUser(userTO, false);
         assertNotNull(userTO);
 
-        connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, userTO.getId());
+        connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, userTO.getId());
         assertNotNull(connObjectTO);
 
         // check if password has been propagated and that saved userTO's password is null
@@ -2456,8 +2456,7 @@ public class UserTestITCase extends AbstractTest {
         userTO = createUser(userTO);
         assertNotNull(userTO);
 
-        connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, userTO.getId());
+        connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_CSV, SubjectType.USER, userTO.getId());
         assertNotNull(connObjectTO);
 
         // check if password has been correctly propagated on Syncope and resource-csv as usual
@@ -2512,8 +2511,8 @@ public class UserTestITCase extends AbstractTest {
         assertNotNull(actual);
         assertNotNull(actual.getDerAttrMap().get("csvuserid"));
 
-        ConnObjectTO connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, actual.getId());
+        ConnObjectTO connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, actual.
+                getId());
         assertNotNull(connObjectTO);
         assertEquals("postalAddress", connObjectTO.getAttrMap().get("postalAddress").getValues().get(0));
 
@@ -2528,9 +2527,97 @@ public class UserTestITCase extends AbstractTest {
 
         actual = updateUser(userMod);
 
-        connObjectTO =
-                resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, actual.getId());
+        connObjectTO = resourceService.getConnectorObject(RESOURCE_NAME_LDAP, SubjectType.USER, actual.getId());
         assertNotNull(connObjectTO);
         assertEquals("newPostalAddress", connObjectTO.getAttrMap().get("postalAddress").getValues().get(0));
+    }
+
+    @Test
+    public void issueSYNCOPE686() {
+        // 1. read configured cipher algorithm in order to be able to restore it at the end of test
+        AttributeTO pwdCipherAlgo = configurationService.read("password.cipher.algorithm");
+        String origpwdCipherAlgo = pwdCipherAlgo.getValues().get(0);
+
+        // 2. set AES password cipher algorithm
+        pwdCipherAlgo.getValues().set(0, "AES");
+        configurationService.set(pwdCipherAlgo.getSchema(), pwdCipherAlgo);
+
+        try {
+            // 3. create role with LDAP resource assigned
+            RoleTO role = RoleTestITCase.buildBasicRoleTO("syncope686");
+            role.getResources().add(RESOURCE_NAME_LDAP);
+            role = createRole(role);
+            assertNotNull(role);
+
+            // 4. create user with no resources
+            UserTO userTO = getUniqueSampleTO("syncope686@apache.org");
+            userTO.getResources().clear();
+
+            userTO = createUser(userTO);
+            assertNotNull(userTO);
+
+            // 5. update user with the new role, and don't provide any password
+            UserMod userMod = new UserMod();
+            userMod.setId(userTO.getId());
+            MembershipMod membMod = new MembershipMod();
+            membMod.setRole(role.getId());
+            userMod.getMembershipsToAdd().add(membMod);
+
+            userTO = updateUser(userMod);
+            assertNotNull(userTO);
+
+            // 5. verify that propagation was successful
+            List<PropagationStatus> props = userTO.getPropagationStatusTOs();
+            assertNotNull(props);
+            assertEquals(1, props.size());
+            PropagationStatus prop = props.iterator().next();
+            assertNotNull(prop);
+            assertEquals(RESOURCE_NAME_LDAP, prop.getResource());
+            assertEquals(PropagationTaskExecStatus.SUCCESS, prop.getStatus());
+        } finally {
+            // restore initial cipher algorithm
+            pwdCipherAlgo.getValues().set(0, origpwdCipherAlgo);
+            configurationService.set(pwdCipherAlgo.getSchema(), pwdCipherAlgo);
+        }
+    }
+
+    @Test
+    public void issueSYNCOPE710() {
+        // 1. create roles for indirect resource assignment
+        RoleTO ldapRole = RoleTestITCase.buildBasicRoleTO("syncope710.ldap");
+        ldapRole.getResources().add(RESOURCE_NAME_LDAP);
+        ldapRole = createRole(ldapRole);
+
+        RoleTO dbRole = RoleTestITCase.buildBasicRoleTO("syncope710.db");
+        dbRole.getResources().add(RESOURCE_NAME_TESTDB);
+        dbRole = createRole(dbRole);
+
+        // 2. create user with memberships for the roles created above
+        UserTO userTO = getUniqueSampleTO("syncope710@syncope.apache.org");
+        userTO.getResources().clear();
+        userTO.getMemberships().clear();
+        MembershipTO memb = new MembershipTO();
+        memb.setRoleId(ldapRole.getId());
+        userTO.getMemberships().add(memb);
+        memb = new MembershipTO();
+        memb.setRoleId(dbRole.getId());
+        userTO.getMemberships().add(memb);
+
+        userTO = createUser(userTO);
+        assertEquals(2, userTO.getPropagationStatusTOs().size());
+
+        // 3. request to propagate passwod only to db
+        StatusMod pwdPropRequest = new StatusMod();
+        pwdPropRequest.setOnSyncope(false);
+        pwdPropRequest.getResourceNames().add(RESOURCE_NAME_TESTDB);
+
+        UserMod userMod = new UserMod();
+        userMod.setId(userTO.getId());
+        userMod.setPassword("newpassword123");
+        userMod.setPwdPropRequest(pwdPropRequest);
+
+        userTO = updateUser(userMod);
+        assertEquals(1, userTO.getPropagationStatusTOs().size());
+        assertEquals(RESOURCE_NAME_TESTDB, userTO.getPropagationStatusTOs().get(0).getResource());
     }
 }

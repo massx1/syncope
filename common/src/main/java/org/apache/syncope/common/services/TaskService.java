@@ -44,6 +44,8 @@ import org.apache.syncope.common.to.ReportExecTO;
 import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.to.SchedTaskTO;
+import org.apache.syncope.common.types.JobAction;
+import org.apache.syncope.common.types.JobStatusType;
 import org.apache.syncope.common.types.TaskType;
 import org.apache.syncope.common.wrap.JobClass;
 import org.apache.syncope.common.wrap.PushActionClass;
@@ -62,7 +64,7 @@ public interface TaskService extends JAXRSService {
      */
     @GET
     @Path("jobClasses")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     List<JobClass> getJobClasses();
 
     /**
@@ -72,7 +74,7 @@ public interface TaskService extends JAXRSService {
      */
     @GET
     @Path("syncActionsClasses")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     List<SyncActionClass> getSyncActionsClasses();
 
     /**
@@ -82,20 +84,22 @@ public interface TaskService extends JAXRSService {
      */
     @GET
     @Path("pushActionsClasses")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     List<PushActionClass> getPushActionsClasses();
 
     /**
      * Returns the task matching the given id.
      *
      * @param taskId id of task to be read
+     * @param details whether include executions or not, defaults to true
      * @param <T> type of taskTO
      * @return task with matching id
      */
     @GET
     @Path("{taskId}")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-    <T extends AbstractTaskTO> T read(@NotNull @PathParam("taskId") Long taskId);
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    <T extends AbstractTaskTO> T read(@NotNull @PathParam("taskId") Long taskId,
+            @QueryParam(PARAM_DETAILS) @DefaultValue("true") boolean details);
 
     /**
      * Returns the task execution with the given id.
@@ -105,7 +109,7 @@ public interface TaskService extends JAXRSService {
      */
     @GET
     @Path("executions/{executionId}")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     TaskExecTO readExecution(@NotNull @PathParam("executionId") Long executionId);
 
     /**
@@ -116,7 +120,7 @@ public interface TaskService extends JAXRSService {
      * @return list of tasks with matching type
      */
     @GET
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     <T extends AbstractTaskTO> PagedResult<T> list(@NotNull @MatrixParam("type") TaskType taskType);
 
     /**
@@ -128,7 +132,7 @@ public interface TaskService extends JAXRSService {
      * @return list of tasks with matching type
      */
     @GET
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     <T extends AbstractTaskTO> PagedResult<T> list(@NotNull @MatrixParam("type") TaskType taskType,
             @QueryParam(PARAM_ORDERBY) String orderBy);
 
@@ -139,15 +143,17 @@ public interface TaskService extends JAXRSService {
      * @param page page number of tasks in relation to page size
      * @param size number of tasks listed per page
      * @param orderBy list of ordering clauses, separated by comma
+     * @param details whether include executions or not, defaults to true
      * @param <T> type of taskTO
      * @return paged list of existing tasks matching type and page/size conditions
      */
     @GET
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     <T extends AbstractTaskTO> PagedResult<T> list(@NotNull @MatrixParam("type") TaskType taskType,
             @NotNull @Min(1) @QueryParam(PARAM_PAGE) @DefaultValue(DEFAULT_PARAM_PAGE) Integer page,
             @NotNull @Min(1) @QueryParam(PARAM_SIZE) @DefaultValue(DEFAULT_PARAM_SIZE) Integer size,
-            @QueryParam(PARAM_ORDERBY) String orderBy);
+            @QueryParam(PARAM_ORDERBY) String orderBy,
+            @QueryParam(PARAM_DETAILS) @DefaultValue("true") boolean details);
 
     /**
      * Returns a paged list of existing tasks matching type and page/size conditions.
@@ -159,10 +165,26 @@ public interface TaskService extends JAXRSService {
      * @return paged list of existing tasks matching type and page/size conditions
      */
     @GET
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     <T extends AbstractTaskTO> PagedResult<T> list(@MatrixParam("type") TaskType taskType,
             @NotNull @Min(1) @QueryParam(PARAM_PAGE) @DefaultValue(DEFAULT_PARAM_PAGE) Integer page,
             @NotNull @Min(1) @QueryParam(PARAM_SIZE) @DefaultValue(DEFAULT_PARAM_SIZE) Integer size);
+
+    /**
+     * Returns the task matching the given id.
+     *
+     * @param taskId id of task where to list the executions
+     * @param page page number of executions in relation to page size
+     * @param size number of executions listed per page
+     * @return list of executions with matching id
+     */
+    @GET
+    @Path("{taskId}")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    PagedResult<TaskExecTO> listEexecutions(
+            @NotNull @Min(1) @QueryParam(PARAM_PAGE) @DefaultValue(DEFAULT_PARAM_PAGE) Integer page,
+            @NotNull @Min(1) @QueryParam(PARAM_SIZE) @DefaultValue(DEFAULT_PARAM_SIZE) Integer size,
+            @NotNull @PathParam("taskId") Long taskId);
 
     /**
      * Creates a new task.
@@ -175,7 +197,7 @@ public interface TaskService extends JAXRSService {
         @Description(target = DocTarget.RESPONSE, value = "Featuring <tt>Location</tt> header of created task")
     })
     @POST
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     <T extends SchedTaskTO> Response create(@NotNull T taskTO);
 
     /**
@@ -186,7 +208,7 @@ public interface TaskService extends JAXRSService {
      */
     @PUT
     @Path("{taskId}")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     void update(@NotNull @PathParam("taskId") Long taskId, @NotNull AbstractTaskTO taskTO);
 
     /**
@@ -216,7 +238,7 @@ public interface TaskService extends JAXRSService {
      */
     @POST
     @Path("{taskId}/execute")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     TaskExecTO execute(@NotNull @PathParam("taskId") Long taskId,
             @QueryParam("dryRun") @DefaultValue("false") boolean dryRun);
 
@@ -228,7 +250,7 @@ public interface TaskService extends JAXRSService {
      */
     @POST
     @Path("executions/{executionId}/report")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     void report(@NotNull @PathParam("executionId") Long executionId, @NotNull ReportExecTO reportExec);
 
     /**
@@ -239,7 +261,28 @@ public interface TaskService extends JAXRSService {
      */
     @POST
     @Path("bulk")
-    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     BulkActionResult bulk(@NotNull BulkAction bulkAction);
+
+    /**
+     * List task jobs of the given type
+     *
+     * @param type of task job
+     * @return List of TaskExecTO
+     */
+    @GET
+    @Path("jobs")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    List<TaskExecTO> listJobs(@MatrixParam("type") JobStatusType type);
+
+    /**
+     * Execute a control action on an existing task
+     *
+     * @param taskId id of task
+     * @param action
+     */
+    @POST
+    @Path("{taskId}")
+    void actionJob(@PathParam("taskId") Long taskId, @QueryParam("action") JobAction action);
 }

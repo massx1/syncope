@@ -34,6 +34,9 @@ import org.apache.syncope.common.types.TaskType;
 import org.apache.syncope.common.util.CollectionWrapper;
 import org.apache.syncope.common.SyncopeClientException;
 import org.apache.syncope.common.to.PushTaskTO;
+import org.apache.syncope.common.to.TaskExecTO;
+import org.apache.syncope.common.types.JobAction;
+import org.apache.syncope.common.types.JobStatusType;
 import org.apache.syncope.common.wrap.PushActionClass;
 import org.apache.wicket.extensions.markup.html.repeater.util.SortParam;
 import org.springframework.stereotype.Component;
@@ -42,7 +45,7 @@ import org.springframework.stereotype.Component;
  * Console client for invoking Rest Tasks services.
  */
 @Component
-public class TaskRestClient extends BaseRestClient implements ExecutionRestClient {
+public class TaskRestClient extends JobRestClient implements ExecutionRestClient {
 
     private static final long serialVersionUID = 6284485820911028843L;
 
@@ -93,12 +96,16 @@ public class TaskRestClient extends BaseRestClient implements ExecutionRestClien
     public int count(final String kind) {
         return getService(TaskService.class).list(TaskType.fromString(kind), 1, 1).getTotalCount();
     }
+    
+    public int countExecutions(final Long taskId) {
+        return getService(TaskService.class).listEexecutions(1, 1, taskId).getTotalCount();
+    }
 
     @SuppressWarnings("unchecked")
     public <T extends AbstractTaskTO> List<T> list(final Class<T> reference,
             final int page, final int size, final SortParam<String> sort) {
 
-        return (List<T>) getService(TaskService.class).list(getTaskType(reference), page, size, toOrderBy(sort)).
+        return (List<T>) getService(TaskService.class).list(getTaskType(reference), page, size, toOrderBy(sort), false).
                 getResult();
     }
 
@@ -118,16 +125,20 @@ public class TaskRestClient extends BaseRestClient implements ExecutionRestClien
         return result;
     }
 
+    public List<TaskExecTO> listExecutions(final int page, final int size, final Long taskId) {
+        return getService(TaskService.class).listEexecutions(page, size, taskId).getResult();
+    }
+
     public PropagationTaskTO readPropagationTask(final Long taskId) {
-        return getService(TaskService.class).read(taskId);
+        return getService(TaskService.class).read(taskId, false);
     }
 
     public NotificationTaskTO readNotificationTask(final Long taskId) {
-        return getService(TaskService.class).read(taskId);
+        return getService(TaskService.class).read(taskId, false);
     }
 
     public <T extends SchedTaskTO> T readSchedTask(final Class<T> reference, final Long taskId) {
-        return getService(TaskService.class).read(taskId);
+        return getService(TaskService.class).read(taskId, false);
     }
 
     public void delete(final Long taskId, final Class<? extends AbstractTaskTO> taskToClass) {
@@ -166,5 +177,25 @@ public class TaskRestClient extends BaseRestClient implements ExecutionRestClien
 
     public BulkActionResult bulkAction(final BulkAction action) {
         return getService(TaskService.class).bulk(action);
+    }
+
+    @Override
+    public boolean isJobRunning(final long taskId) {
+        for (TaskExecTO taskExecTO : getService(TaskService.class).listJobs(JobStatusType.RUNNING)) {
+            if (taskExecTO.getTask() == taskId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void startJob(final long taskId) {
+        getService(TaskService.class).actionJob(taskId, JobAction.START);
+    }
+
+    @Override
+    public void stopJob(final long taskId) {
+        getService(TaskService.class).actionJob(taskId, JobAction.STOP);
     }
 }

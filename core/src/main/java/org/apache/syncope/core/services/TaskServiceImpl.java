@@ -34,8 +34,10 @@ import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.reqres.PagedResult;
 import org.apache.syncope.common.to.PushTaskTO;
+import org.apache.syncope.common.types.JobStatusType;
 import org.apache.syncope.common.types.RESTHeaders;
 import org.apache.syncope.common.types.PropagationTaskExecStatus;
+import org.apache.syncope.common.types.JobAction;
 import org.apache.syncope.common.types.TaskType;
 import org.apache.syncope.common.util.CollectionWrapper;
 import org.apache.syncope.common.wrap.PushActionClass;
@@ -97,39 +99,45 @@ public class TaskServiceImpl extends AbstractServiceImpl implements TaskService 
 
     @Override
     public <T extends AbstractTaskTO> PagedResult<T> list(final TaskType taskType) {
-        return list(taskType, DEFAULT_PARAM_PAGE_VALUE, DEFAULT_PARAM_SIZE_VALUE, null);
+        return list(taskType, DEFAULT_PARAM_PAGE_VALUE, DEFAULT_PARAM_SIZE_VALUE, null, true);
     }
 
     @Override
     public <T extends AbstractTaskTO> PagedResult<T> list(final TaskType taskType, final String orderBy) {
-        return list(taskType, DEFAULT_PARAM_PAGE_VALUE, DEFAULT_PARAM_SIZE_VALUE, orderBy);
+        return list(taskType, DEFAULT_PARAM_PAGE_VALUE, DEFAULT_PARAM_SIZE_VALUE, orderBy, true);
     }
 
     @Override
     public <T extends AbstractTaskTO> PagedResult<T> list(
             final TaskType taskType, final Integer page, final Integer size) {
 
-        return list(taskType, page, size, null);
+        return list(taskType, page, size, null, true);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T extends AbstractTaskTO> PagedResult<T> list(final TaskType taskType,
-            final Integer page, final Integer size, final String orderBy) {
+            final Integer page, final Integer size, final String orderBy, final boolean details) {
 
         List<OrderByClause> orderByClauses = getOrderByClauses(orderBy);
         return (PagedResult<T>) buildPagedResult(
-                controller.list(taskType, page, size, orderByClauses), page, size, controller.count(taskType));
+                controller.list(taskType, page, size, orderByClauses, details), page, size, controller.count(taskType));
     }
 
     @Override
-    public <T extends AbstractTaskTO> T read(final Long taskId) {
-        return controller.read(taskId);
+    public <T extends AbstractTaskTO> T read(final Long taskId, final boolean details) {
+        return controller.read(taskId, details);
     }
 
     @Override
     public TaskExecTO readExecution(final Long executionId) {
         return controller.readExecution(executionId);
+    }
+
+    @Override
+    public PagedResult<TaskExecTO> listEexecutions(final Integer page, final Integer size, final Long taskId) {
+        final List<TaskExecTO> execTOs = controller.listExecution(taskId);
+        return buildPagedResult(execTOs, page, size, execTOs.size());
     }
 
     @Override
@@ -154,5 +162,15 @@ public class TaskServiceImpl extends AbstractServiceImpl implements TaskService 
     @Override
     public BulkActionResult bulk(final BulkAction bulkAction) {
         return controller.bulk(bulkAction);
+    }
+
+    @Override
+    public List<TaskExecTO> listJobs(final JobStatusType type) {
+        return controller.listJobs(type, TaskExecTO.class);
+    }
+
+    @Override
+    public void actionJob(final Long taskId, final JobAction action) {
+        controller.actionJob(taskId, action);
     }
 }
