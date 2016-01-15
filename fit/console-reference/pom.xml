@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.apache.syncope</groupId>
+    <artifactId>syncope-fit</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+  </parent>
+
+  <name>Apache Syncope FIT Console Reference</name>
+  <description>Apache Syncope FIT Console Reference</description>
+  <groupId>org.apache.syncope.fit</groupId>
+  <artifactId>syncope-fit-console-reference</artifactId>
+  <packaging>war</packaging>
+  
+  <properties>
+    <rootpom.basedir>${basedir}/../..</rootpom.basedir>
+  </properties>
+
+  <dependencies>
+    <dependency> 
+      <groupId>javax.servlet</groupId> 
+      <artifactId>javax.servlet-api</artifactId> 
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet.jsp</groupId>
+      <artifactId>javax.servlet.jsp-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.syncope.ext.camel</groupId>
+      <artifactId>syncope-ext-camel-client-console</artifactId>
+      <version>${project.version}</version>
+    </dependency>    
+    <dependency>
+      <groupId>org.apache.syncope.client</groupId>
+      <artifactId>syncope-client-console</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.lmax</groupId>
+      <artifactId>disruptor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+    </dependency>
+    
+    <!-- TEST -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.activiti</groupId>
+      <artifactId>activiti-webapp-explorer2</artifactId>            
+      <type>war</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.syncope.fit</groupId>
+      <artifactId>syncope-fit-build-tools</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.tirasa.connid.bundles.soap</groupId>
+      <artifactId>wssample</artifactId>
+      <type>war</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.syncope.fit</groupId>
+      <artifactId>syncope-fit-core-reference</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <inherited>true</inherited>
+        <executions>
+          <execution>
+            <id>setupActivitiModeler</id>
+            <phase>process-resources</phase>
+            <configuration>
+              <target>
+                <unzip src="${settings.localRepository}/org/activiti/activiti-webapp-explorer2/${activiti.version}/activiti-webapp-explorer2-${activiti.version}.war" dest="${project.build.directory}/activiti-webapp-explorer2" />
+                
+                <mkdir dir="${activiti-modeler.directory}" />
+                <copy file="${project.build.directory}/activiti-webapp-explorer2/modeler.html" todir="${activiti-modeler.directory}" />
+                <replace file="${activiti-modeler.directory}/modeler.html" token="&lt;/head&gt;" value="&lt;script type=&quot;text/javascript&quot;&gt;window.onunload = refreshParent; function refreshParent() { window.opener.location.reload(); }&lt;/script&gt;&lt;/head&gt;" />
+                <copy file="${project.build.directory}/activiti-webapp-explorer2/WEB-INF/classes/stencilset.json" todir="${activiti-modeler.directory}" />
+
+                <mkdir dir="${activiti-modeler.directory}/editor-app" />
+                <copy todir="${activiti-modeler.directory}/editor-app">
+                  <fileset dir="${project.build.directory}/activiti-webapp-explorer2/editor-app" />                  
+                </copy>
+                <replaceregexp file="${activiti-modeler.directory}/editor-app/editor/oryx.debug.js" match="ORYX.CONFIG.ROOT_PATH =.*&quot;editor/&quot;; //TODO: Remove last slash!!" replace="BASE_PATH = window.location.toString().substr(0, window.location.toString().indexOf('/wicket')); ORYX.CONFIG.ROOT_PATH = BASE_PATH + &quot;/activiti-modeler/editor-app/editor/&quot;;" byline="true" />
+                <replace file="${activiti-modeler.directory}/editor-app/editor/oryx.debug.js" token="new Ajax.Request(ACTIVITI.CONFIG.contextRoot + '/editor/stencilset?version=' + Date.now(), {" value="new Ajax.Request(window.location.toString().substr(0, window.location.toString().indexOf('/activiti-modeler')) + &quot;/activiti-modeler/stencilset.json&quot;, {" />
+                <replace file="${activiti-modeler.directory}/editor-app/editor/oryx.debug.js" token="ORYX.Editor.createByUrl(modelUrl);" value="modelUrl = BASE_PATH + &quot;/workflowDefGET&quot;; ORYX.Editor.createByUrl(modelUrl);" />
+                <replace file="${activiti-modeler.directory}/editor-app/editor/oryx.debug.js" token="ORYX.Editor.createByUrl = function(modelUrl){" value="modelUrl = BASE_PATH + &quot;/workflowDefGET&quot;; ORYX.Editor.createByUrl = function(modelUrl){" />                
+                <replace file="${activiti-modeler.directory}/editor-app/configuration/toolbar-default-actions.js" token="window.location.href = &quot;./&quot;;" value="window.close();" />
+                                               
+                <copy file="${basedir}/src/main/resources/url-config.js" todir="${activiti-modeler.directory}/editor-app/configuration" overwrite="true" />
+                <copy file="${basedir}/src/main/resources/save-model.html" todir="${activiti-modeler.directory}/editor-app/popups" overwrite="true" />
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <inherited>true</inherited>
+        <executions>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.cargo</groupId>
+        <artifactId>cargo-maven2-plugin</artifactId>
+        <inherited>true</inherited>
+        <configuration>
+          <container>
+            <dependencies>
+              <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+              </dependency>
+            </dependencies>
+          </container>
+          <configuration>
+            <type>standalone</type>
+            <properties>
+              <cargo.servlet.port>${cargo.servlet.port}</cargo.servlet.port>
+              <cargo.tomcat.ajp.port>${cargo.tomcat.ajp.port}</cargo.tomcat.ajp.port>
+              <cargo.rmi.port>${cargo.rmi.port}</cargo.rmi.port>
+
+              <cargo.jvmargs>-XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m -Xmx1024m -Xms512m</cargo.jvmargs>
+            </properties>
+            <configfiles>
+              <configfile>
+                <file>${project.build.directory}/classes/context.xml</file>
+                <todir>conf/</todir>
+                <tofile>context.xml</tofile>
+              </configfile>
+            </configfiles>
+          </configuration>
+          <deployables>
+            <deployable>
+              <groupId>net.tirasa.connid.bundles.soap</groupId>
+              <artifactId>wssample</artifactId>
+              <type>war</type>
+              <properties>
+                <context>wssample</context>
+              </properties>
+            </deployable>
+            <deployable>
+              <groupId>org.apache.syncope.fit</groupId>
+              <artifactId>syncope-fit-build-tools</artifactId>
+              <type>war</type>
+              <properties>
+                <context>syncope-fit-build-tools</context>
+              </properties>
+            </deployable>
+            <deployable>
+              <location>${basedir}/../core-reference/target/syncope-fit-core-reference-${project.version}</location>
+              <pingURL>http://localhost:${cargo.servlet.port}/syncope/cacheStats.jsp</pingURL>
+              <pingTimeout>60000</pingTimeout>
+              <properties>
+                <context>syncope</context>
+              </properties>
+            </deployable>
+          </deployables>
+        </configuration>
+        <executions>
+          <execution>
+            <id>start-container</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>start</goal>
+            </goals>
+            <configuration>
+              <wait>false</wait>
+            </configuration>
+          </execution>
+          <execution>
+            <id>stop-container</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>stop</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <resourceIncludes>src/main/resources/**/*.properties</resourceIncludes>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>ianal-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+    
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+  
+  <profiles>
+    <profile>
+      <id>debug</id>
+
+      <properties>
+        <skipTests>true</skipTests>
+      </properties>
+
+      <build>
+        <defaultGoal>clean verify cargo:run</defaultGoal>
+
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.cargo</groupId>
+            <artifactId>cargo-maven2-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <configuration>
+                <properties>
+                  <cargo.jvmargs>-Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n
+                    -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m -Xmx1024m -Xms512m</cargo.jvmargs>
+                </properties>
+              </configuration>
+              <deployables>
+                <deployable>
+                  <groupId>net.tirasa.connid.bundles.soap</groupId>
+                  <artifactId>wssample</artifactId>
+                  <type>war</type>
+                  <properties>
+                    <context>wssample</context>
+                  </properties>
+                </deployable>
+                <deployable>
+                  <groupId>org.apache.syncope.fit</groupId>
+                  <artifactId>syncope-fit-build-tools</artifactId>
+                  <type>war</type>
+                  <properties>
+                    <context>syncope-fit-build-tools</context>
+                  </properties>
+                </deployable>
+                <deployable>
+                  <location>${basedir}/../core-reference/target/syncope-fit-core-reference-${project.version}</location>
+                  <pingURL>http://localhost:${cargo.servlet.port}/syncope/cacheStats.jsp</pingURL>
+                  <pingTimeout>60000</pingTimeout>
+                  <properties>
+                    <context>syncope</context>
+                  </properties>
+                </deployable>
+                <deployable>
+                  <location>${project.build.directory}/${project.build.finalName}</location>
+                  <properties>
+                    <context>syncope-console</context>
+                  </properties>
+                </deployable>
+              </deployables>
+            </configuration>
+            <executions>
+              <execution>
+                <id>start-container</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>stop-container</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>skipTests</id>
+
+      <dependencies>
+        <dependency>
+          <groupId>com.h2database</groupId>
+          <artifactId>h2</artifactId>
+        </dependency>
+      </dependencies>
+      
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <skipTests>${skipTests}</skipTests>
+            </configuration>
+          </plugin>
+          
+          <plugin>
+            <groupId>org.codehaus.cargo</groupId>
+            <artifactId>cargo-maven2-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <deployables>
+                <deployable>
+                  <location>${project.build.directory}/${project.build.finalName}.war</location>
+                </deployable>
+              </deployables>
+            </configuration>
+            <executions>
+              <execution>
+                <id>install-container</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>install</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>start-container</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>stop-container</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>jrebel</id>
+      
+      <build>
+        <defaultGoal>clean verify cargo:run</defaultGoal>
+
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <skipTests>true</skipTests>
+            </configuration>
+          </plugin>
+          
+          <plugin>
+            <groupId>org.zeroturnaround</groupId>
+            <artifactId>jrebel-maven-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <classpath>
+                <fallback>default</fallback>
+                <resources>
+                  <resource>
+                    <directory>${basedir}/../../common/lib/target/classes</directory>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../common/rest-api/target/classes</directory>
+                  </resource>
+
+                  <resource>
+                    <directory>${basedir}/../../core/logic/target/classes</directory>
+                    <excludes>
+                      <exclude>logicContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/rest-cxf/target/classes</directory>
+                    <excludes>
+                      <exclude>restCXFContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/misc/target/classes</directory>
+                    <excludes>
+                      <exclude>securityContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/persistence-api/target/classes</directory>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/persistence-jpa/target/classes</directory>
+                    <excludes>
+                      <exclude>persistenceContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/provisioning-api/target/classes</directory>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/provisioning-java/target/classes</directory>
+                    <excludes>
+                      <exclude>provisioningContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/workflow-api/target/classes</directory>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/workflow-java/target/classes</directory>
+                    <excludes>
+                      <exclude>workflowContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../core/workflow-activiti/target/classes</directory>
+                    <excludes>
+                      <exclude>workflowActivitiContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../ext/camel/provisioning-camel/target/classes</directory>
+                    <excludes>
+                      <exclude>provisioningCamelContext.xml</exclude>
+                    </excludes>
+                  </resource>
+                  
+                  <resource>
+                    <directory>${basedir}/../../client/console/target/classes</directory>
+                  </resource>
+                  <resource>
+                    <directory>${basedir}/../../ext/camel/client-console/target/classes</directory>
+                  </resource>
+                </resources>
+              </classpath>
+              
+              <web>
+                <resources>
+                  <resource>
+                    <target>/</target>
+                    <directory>${basedir}/../../ext/swagger-ui/target/classes/META-INF/resources</directory>
+                  </resource>
+
+                  <resource>
+                    <target>/</target>
+                    <directory>${basedir}/../../client/console/target/classes/META-INF/resources/</directory>
+                  </resource>
+                  <resource>
+                    <target>/</target>
+                    <directory>${basedir}/../../ext/camel/client-console/target/classes</directory>
+                  </resource>
+                </resources>
+              </web>
+    
+              <alwaysGenerate>true</alwaysGenerate>
+            </configuration>
+            <executions>
+              <execution>
+                <id>generate-rebel-xml</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.codehaus.cargo</groupId>
+            <artifactId>cargo-maven2-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <configuration>
+                <properties>
+                  <cargo.jvmargs>-Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n
+                    -noverify -javaagent:${env.REBEL_HOME}/jrebel.jar -Drebel.spring_plugin=true
+                    -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m -Xmx1024m -Xms512m</cargo.jvmargs>
+                </properties>
+              </configuration>
+              <deployables>
+                <deployable>
+                  <groupId>net.tirasa.connid.bundles.soap</groupId>
+                  <artifactId>wssample</artifactId>
+                  <type>war</type>
+                  <properties>
+                    <context>wssample</context>
+                  </properties>
+                </deployable>
+                <deployable>
+                  <groupId>org.apache.syncope.fit</groupId>
+                  <artifactId>syncope-fit-build-tools</artifactId>
+                  <type>war</type>
+                  <properties>
+                    <context>syncope-fit-build-tools</context>
+                  </properties>
+                </deployable>
+                <deployable>
+                  <location>${basedir}/../core-reference/target/syncope-fit-core-reference-${project.version}</location>
+                  <pingURL>http://localhost:${cargo.servlet.port}/syncope/cacheStats.jsp</pingURL>
+                  <pingTimeout>60000</pingTimeout>
+                  <properties>
+                    <context>syncope</context>
+                  </properties>
+                </deployable>
+                <deployable>
+                  <location>${project.build.directory}/${project.build.finalName}</location>
+                  <properties>
+                    <context>syncope-console</context>
+                  </properties>
+                </deployable>
+              </deployables>
+            </configuration>
+            <executions>
+              <execution>
+                <id>start-container</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>stop-container</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>apache-release</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+</project>

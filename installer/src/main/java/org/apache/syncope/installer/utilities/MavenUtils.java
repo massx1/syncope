@@ -65,8 +65,8 @@ public class MavenUtils {
         final InvocationRequest request = new DefaultInvocationRequest();
         request.setGoals(Collections.singletonList("archetype:generate"));
         request.setInteractive(false);
-        final Properties properties
-                = archetypeProperties(archetypeVersion, groupId, artifactId, secretKey, anonymousKey);
+        final Properties properties =
+                archetypeProperties(archetypeVersion, groupId, artifactId, secretKey, anonymousKey);
         request.setProperties(properties);
         if (customSettingsFile != null && FileUtils.sizeOf(customSettingsFile) > 0) {
             request.setUserSettingsFile(customSettingsFile);
@@ -82,7 +82,8 @@ public class MavenUtils {
         properties.setProperty("archetypeGroupId", "org.apache.syncope");
         properties.setProperty("archetypeArtifactId", "syncope-archetype");
         if (archetypeVersion.contains("SNAPSHOT")) {
-            properties.setProperty("archetypeRepository", "http://repository.apache.org/content/repositories/snapshots");
+            properties.setProperty("archetypeRepository",
+                    "http://repository.apache.org/content/repositories/snapshots");
         } else {
             properties.setProperty("archetypeRepository", "http://repo1.maven.org/maven2");
         }
@@ -91,32 +92,19 @@ public class MavenUtils {
         properties.setProperty("artifactId", artifactId);
         properties.setProperty("secretKey", secretKey);
         properties.setProperty("anonymousKey", anonymousKey);
+        properties.setProperty("version", "1.0-SNAPSHOT");
         return properties;
     }
 
-    public void mvnCleanPackage(final String path, final File customSettingsFile) {
-        final InvocationRequest request = new DefaultInvocationRequest();
-        if (customSettingsFile != null && FileUtils.sizeOf(customSettingsFile) > 0) {
-            request.setUserSettingsFile(customSettingsFile);
-        }
-        final List<String> mavenGoals = new ArrayList<String>();
-        mavenGoals.add("clean");
-        mavenGoals.add("package");
-        request.setGoals(mavenGoals);
-        logToHandler(request.getGoals(), new Properties());
-        logToFile(request.getGoals(), new Properties());
-        invoke(request, path);
-    }
+    public void mvnCleanPackageWithProperties(
+            final String path, final Properties properties, final File customSettingsFile) {
 
-    public void mvnCleanPackageWithProperties(final String path, final String confDirectory,
-            final String logDirectory, final String bundlesDirectory, final File customSettingsFile) {
         final InvocationRequest request = new DefaultInvocationRequest();
-        final Properties properties = packageProperties(confDirectory, logDirectory, bundlesDirectory);
         request.setProperties(properties);
         if (customSettingsFile != null && FileUtils.sizeOf(customSettingsFile) > 0) {
             request.setUserSettingsFile(customSettingsFile);
         }
-        final List<String> mavenGoals = new ArrayList<String>();
+        final List<String> mavenGoals = new ArrayList<>();
         mavenGoals.add("clean");
         mavenGoals.add("package");
         request.setGoals(mavenGoals);
@@ -149,15 +137,6 @@ public class MavenUtils {
         }
     }
 
-    private Properties packageProperties(final String confDirectory, final String logDirectory,
-            final String bundlesDirectory) {
-        final Properties properties = new Properties();
-        properties.setProperty("conf.directory", confDirectory);
-        properties.setProperty("log.directory", logDirectory);
-        properties.setProperty("bundles.directory", bundlesDirectory);
-        return properties;
-    }
-
     private InvocationResult invoke(final InvocationRequest request, final String path) {
         InvocationResult result = null;
         final Invoker invoker = new DefaultInvoker();
@@ -168,11 +147,7 @@ public class MavenUtils {
                     new PrintStream(InstallLog.getInstance().getFileAbsolutePath()), true));
             invoker.setWorkingDirectory(new File(path));
             result = invoker.execute(request);
-        } catch (MavenInvocationException ex) {
-            final String messageError = "Maven exception: " + ex.getMessage();
-            handler.emitError(messageError, messageError);
-            InstallLog.getInstance().info(messageError);
-        } catch (FileNotFoundException ex) {
+        } catch (MavenInvocationException | FileNotFoundException ex) {
             final String messageError = "Maven exception: " + ex.getMessage();
             handler.emitError(messageError, messageError);
             InstallLog.getInstance().info(messageError);

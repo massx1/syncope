@@ -26,7 +26,7 @@ public enum DBs {
     SQLSERVER("sqlserver"),
     ORACLE("oracle");
 
-    private DBs(final String name) {
+    DBs(final String name) {
         this.name = name;
     }
 
@@ -46,7 +46,10 @@ public enum DBs {
             db = MARIADB;
         } else if (ORACLE.getName().equalsIgnoreCase(containerName)) {
             db = ORACLE;
+        } else {
+            db = SQLSERVER;
         }
+
         return db;
     }
 }

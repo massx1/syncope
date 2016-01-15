@@ -33,7 +33,7 @@ public class JBoss extends AbstractContainer {
 
     private final String jbossHost;
 
-    private final String jbossPort;
+    private final String jbossManagementPort;
 
     private final String installPath;
 
@@ -41,15 +41,17 @@ public class JBoss extends AbstractContainer {
 
     private final HttpUtils httpUtils;
 
-    public JBoss(final boolean jbossSsl, final String jbossHost, final String jbossPort,
+    public JBoss(final boolean jbossSsl, final String jbossHost, final String jbossManagementPort,
             final String jbossAdminUsername, final String jbossAdminPassword,
             final String installPath, final String artifactId, final AbstractUIProcessHandler handler) {
+
         this.jbossSsl = jbossSsl;
         this.jbossHost = jbossHost;
-        this.jbossPort = jbossPort;
+        this.jbossManagementPort = jbossManagementPort;
         this.installPath = installPath;
         this.artifactId = artifactId;
-        httpUtils = new HttpUtils(jbossSsl, jbossHost, jbossPort, jbossAdminUsername, jbossAdminPassword, handler);
+        this.httpUtils = new HttpUtils(
+                jbossSsl, jbossHost, jbossManagementPort, jbossAdminUsername, jbossAdminPassword, handler);
 
     }
 
@@ -61,18 +63,22 @@ public class JBoss extends AbstractContainer {
         return deploy(UNIX_CONSOLE_RELATIVE_PATH, "syncope-console.war");
     }
 
+    public boolean deployEnduser() {
+        return deploy(UNIX_ENDUSER_RELATIVE_PATH, "syncope-console.war");
+    }
+
     public boolean deploy(final String whatDeploy, final String warName) {
         final String responseBodyAsString = httpUtils.postWithDigestAuth(
-                String.format(addContentUrl, jbossHost, jbossPort),
+                String.format(addContentUrl, jbossHost, jbossManagementPort),
                 String.format(whatDeploy, installPath, artifactId));
 
         final JBossAddResponse jBossAddResponse = JsonUtils.jBossAddResponse(responseBodyAsString);
 
         final JBossDeployRequestContent jBossDeployRequestContent = new JBossDeployRequestContent(
-                jBossAddResponse.getResult().getBYTES_VALUE(), warName);
+                jBossAddResponse.getResult().getBytesValue(), warName);
 
         int status = httpUtils.
-                postWithStringEntity(String.format(enableUrl, jbossHost, jbossPort),
+                postWithStringEntity(String.format(enableUrl, jbossHost, jbossManagementPort),
                         JsonUtils.jBossDeployRequestContent(jBossDeployRequestContent));
         return status == 200;
     }

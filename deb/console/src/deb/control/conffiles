@@ -1,1 +1,2 @@
-/etc/tomcat7/Catalina/localhost/syncope-console.xml
+/etc/tomcat8/Catalina/localhost/syncope-console.xml
+/etc/apache-syncope/console.properties

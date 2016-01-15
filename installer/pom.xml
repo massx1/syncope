@@ -24,7 +24,7 @@ under the License.
   <parent>
     <groupId>org.apache.syncope</groupId>
     <artifactId>syncope</artifactId>
-    <version>1.2.3-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
   </parent>
 
   <name>Apache Syncope Installer</name>
@@ -34,15 +34,9 @@ under the License.
   <artifactId>syncope-installer</artifactId>
   <packaging>jar</packaging>
   
-  <distributionManagement>
-    <site>
-      <id>syncope.website</id>
-      <name>Apache Syncope website</name>
-      <url>${site.deploymentBaseUrl}/${project.artifactId}</url>
-    </site>
-  </distributionManagement>
-
   <properties>
+    <rootpom.basedir>${basedir}/..</rootpom.basedir>
+
     <staging.dir>${project.build.directory}/staging</staging.dir>
   </properties>
 
@@ -61,6 +55,7 @@ under the License.
       <groupId>org.codehaus.izpack</groupId>
       <artifactId>izpack-panel</artifactId>
     </dependency>
+    
     <dependency>
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-invoker</artifactId>
@@ -114,9 +109,6 @@ under the License.
               <resources>
                 <resource>
                   <directory>src/main/resources/izpack</directory>
-                  <includes>
-                    <include>**/*</include>
-                  </includes>
                   <filtering>false</filtering>
                 </resource>
                 <resource>
@@ -133,6 +125,7 @@ under the License.
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
@@ -152,6 +145,7 @@ under the License.
         <groupId>org.codehaus.izpack</groupId>
         <artifactId>izpack-maven-plugin</artifactId>
         <configuration>
+          <attach>false</attach>
           <descriptorEncoding>${project.build.sourceEncoding}</descriptorEncoding>
         </configuration>
         <executions>
@@ -169,9 +163,43 @@ under the License.
           </execution>
         </executions>
       </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <includeResources>false</includeResources>
+        </configuration>
+      </plugin>
     </plugins>
 
     <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>installer.properties</include>
+          <include>modelerPom.xml</include>
+        </includes>
+        <filtering>true</filtering>
+      </resource>
+      <resource>
+        <directory>${basedir}/../fit/core-reference/src/main/resources/jboss/domains</directory>
+        <includes>
+          <include>**/MasterDomain.xml</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${basedir}/../fit/core-reference/src/main/resources/all</directory>
+        <includes>
+          <include>provisioning.properties</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${basedir}/../fit/core-reference/src/main/resources</directory>
+        <includes>
+          <include>workflow.properties</include>
+        </includes>
+      </resource>
       <resource>
         <directory>${basedir}</directory>
         <targetPath>META-INF</targetPath>
@@ -195,6 +223,43 @@ under the License.
             <configuration>
               <skip>true</skip>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>site</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.asciidoctor</groupId>
+            <artifactId>asciidoctor-maven-plugin</artifactId>
+            <inherited>false</inherited>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <inherited>true</inherited>
+            <configuration>
+              <skip>true</skip>
+              <skipDeploy>true</skipDeploy>
+              <generateReports>false</generateReports>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-docs-to-site</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

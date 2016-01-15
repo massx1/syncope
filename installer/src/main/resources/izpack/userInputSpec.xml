@@ -52,10 +52,6 @@ under the License.
       <spec id="archetype.mvn.log.directory" size="20" set="/var/tmp/syncope/log" mustExist="false" create="true"/>
     </field>
     <field type="space"/>
-    <field type="dir" variable="mvn.modeler.directory">
-      <spec id="archetype.mvn.modeler.directory" size="20" set="/var/tmp/syncope/modeler" mustExist="false" create="true"/>
-    </field>
-    <field type="space"/>
     <field type="dir" variable="mvn.bundle.directory">
       <spec id="archetype.mvn.bundle.directory" size="20" set="/var/tmp/syncope/bundles" mustExist="false" create="true"/>
     </field>
@@ -99,8 +95,30 @@ under the License.
     </field>
   </panel>
   
-  <panel id="persistence" order="2" border="false">
-    <field type="title" txt="Database options" bold="true" size="2" />
+  <panel id="syncope_options" order="2" border="false">
+    <field type="title" txt="Syncope options" bold="true" size="2" />
+    
+    <field type="divider"/>
+    <field type="space"/>
+    
+    <field type="staticText" align="left" txt="Options" />
+    <field type="check" variable="options.swagger">
+      <spec id="options.swagger.id" true="true" false="false" set="false"/>
+    </field>
+    <field type="check" variable="options.camel">
+      <spec id="options.camel.id" true="true" false="false" set="false"/>
+    </field>
+    <field type="check" variable="options.activiti.workflow.adapter">
+      <spec id="options.activiti.workflow.adapter.id" true="true" false="false" set="true"/>
+    </field>
+    <field type="space"/>
+    <field type="dir" variable="mvn.modeler.directory" conditionid="options.choice.activiti">
+      <spec id="archetype.mvn.modeler.directory" size="20" set="/var/tmp/syncope/modeler" mustExist="false" create="true"/>
+    </field>
+  </panel>
+  
+  <panel id="persistence" order="3" border="false">
+    <field type="title" txt="Database" bold="true" size="2" />
     
     <field type="divider"/>
     <field type="space"/>
@@ -116,8 +134,8 @@ under the License.
     </field>
   </panel>
   
-  <panel id="persistence_advanced" order="2" border="false">
-    <field type="title" txt="Database advanced options" bold="true" size="2" />
+  <panel id="persistence_advanced" order="3" border="false">
+    <field type="title" txt="Database settings" bold="true" size="2" />
     
     <field type="divider"/>
     <field type="space"/>
@@ -131,7 +149,7 @@ under the License.
       <spec id="persistence.jdbc.url" size="20" set="jdbc:oracle:thin:@localhost:1521:orcl"/>
     </field>
     <field type="text" variable="persistence.url" conditionid="sqlserver.choice">
-      <spec id="persistence.jdbc.url" size="20" set="jdbc:sqlserver://localhost:1344;database=syncope;selectMethod=cursor;sendStringParametersAsUnicode=false"/>
+      <spec id="persistence.jdbc.url" size="20" set="jdbc:sqlserver://localhost:1433;database=syncope;selectMethod=cursor;sendStringParametersAsUnicode=false"/>
     </field>
     <field type="space"/>
     <field type="text" variable="persistence.dbuser">
@@ -152,7 +170,7 @@ under the License.
     </field>
   </panel>
   
-  <panel id="container" order="3" border="false">
+  <panel id="container" order="4" border="false">
     <field type="title" txt="Application Server" bold="true" size="2" />
     
     <field type="divider"/>
@@ -174,8 +192,8 @@ under the License.
     </field>
   </panel>
   
-  <panel id="container_advanced" order="3" border="false">
-    <field type="title" txt="Application Server" bold="true" size="2" />
+  <panel id="container_advanced" order="4" border="false">
+    <field type="title" txt="Application Server Settings" bold="true" size="2" />
     
     <field type="divider"/>
     <field type="space"/>
@@ -200,6 +218,18 @@ under the License.
       <spec id="tomcat.container.pwd.id" size="20" set="s3cret"/>
     </field>
     
+    <field type="check" variable="glassfish.container.ssl" conditionid="glassfish.choice">
+      <spec id="glassfish.container.ssl.id" true="true" false="false" set="false"/>
+    </field>
+    <field type="space"/>
+    <field type="text" variable="glassfish.container.host" conditionid="glassfish.choice">
+      <spec id="glassfish.container.host.id" size="20" set="localhost"/>
+    </field>
+    <field type="space"/>
+    <field type="text" variable="glassfish.container.port" conditionid="glassfish.choice">
+      <spec id="glassfish.container.port.id" size="20" set="8080"/>
+    </field>
+    <field type="space"/>
     <field type="text" variable="glassfish.container.dir" conditionid="glassfish.choice">
       <spec id="glassfish.container.dir.id" size="20" set="/opt/glassfish4/"/>
     </field>
@@ -213,7 +243,7 @@ under the License.
     </field>
     <field type="space"/>
     <field type="text" variable="jboss.container.port" conditionid="jboss.choice">
-      <spec id="jboss.container.port.id" size="20" set="9990"/>
+      <spec id="jboss.container.port.id" size="20" set="8080"/>
     </field>
     <field type="space"/>
     <field type="text" variable="jboss.container.jdbc.module" conditionid="jboss.choice">
@@ -227,5 +257,9 @@ under the License.
     <field type="text" variable="jboss.container.pwd" conditionid="jboss.choice">
       <spec id="jboss.container.pwd.id" size="20" set="password"/>
     </field>
+    <field type="space"/>
+    <field type="text" variable="jboss.container.management.port" conditionid="jboss.choice">
+      <spec id="jboss.container.management.port.id" size="20" set="9990"/>
+    </field> 
   </panel>
 </userInput>

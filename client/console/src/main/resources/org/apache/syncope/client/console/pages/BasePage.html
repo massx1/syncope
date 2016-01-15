@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'/>
+
+    <title>Apache Syncope</title>
+
+    <link rel="shortcut icon" href="img/favicon.png" type="image/png"/>
+    <link href="webjars/font-awesome/${font-awesome.version}/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="webjars/ionicons/${ionicons.version}/css/ionicons.min.css" rel="stylesheet" type="text/css" />
+
+    <link href="css/AdminLTE_plugins/dataTables/dataTables.bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="css/AdminLTE_skins/skin-green.css" rel="stylesheet" type="text/css" />
+    <link href="css/syncopeConsole.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="webjars/bootbox/${bootbox.version}/bootbox.js"></script>
+  </head>
+  <body class="skin-green">
+
+    <div class="wrapper">
+      <span wicket:id="feedback"></span>
+      <header class="main-header block-header">
+        <div class="logo logo-pos">
+          <img src="img/logo.png"/>
+        </div>
+
+        <nav class="navbar navbar-static-top" role="navigation">
+          <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+            <span class="sr-only">Toggle navigation</span>
+          </a>
+          <ul class="nav navbar-nav">
+            <li>
+              <a href="#" class="dropdown-toggle">
+                <span class="hidden-xs"><label wicket:id="domain"/></span>
+              </a>
+            </li>
+          </ul>
+          <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+
+              <li class="dropdown tasks-menu" wicket:id="todosContainer">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                  <i class="fa fa-flag-o"></i>
+                  <span class="label label-danger" wicket:id="todos"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="footer">
+                    <a href="#">View all TODOs</a>
+                  </li>
+                </ul>
+              </li>
+
+              <li class="dropdown user user-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  <!-- hidden-xs hides the username on small devices so only the image appears. -->
+                  <span class="hidden-xs"><label wicket:id="username"/></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="user-footer">
+                    <div class="pull-left">
+                    </div>
+                    <div class="pull-right">
+                      <a href="#" class="btn btn-default btn-flat" wicket:id="logout"><wicket:message key="logout"/></a>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </header>
+
+      <aside class="main-sidebar block-sidebar">
+        <section class="sidebar">
+          <ul class="sidebar-menu">
+            <li wicket:id="dashboardLI"><a href="#" wicket:id="dashboard"><i class="fa fa-dashboard"></i>Dashboard</a></li>
+            <li wicket:id="realmsLI"><a href="#" wicket:id="realms"><i class="fa fa-folder-o"></i>Realms</a></li>
+            <li wicket:id="topologyLI"><a href="#" wicket:id="topology"><i class="fa fa-plug"></i>Topology</a></li>
+            <li wicket:id="reportsLI"><a href="#" wicket:id="reports"><i class="fa fa-pie-chart"></i>Reports</a></li>
+            <li wicket:id="configurationLI" class="treeview">
+              <a href="#"><i class="fa fa-edit"></i><span>Configuration</span> <i class="fa fa-angle-left pull-right"></i></a>
+              <ul wicket:id="configurationUL" class="treeview-menu">
+                <li wicket:id="rolesLI"><a href="#" wicket:id="roles"><i class="fa fa-users"></i>Roles</a></li>
+                <li wicket:id="policiesLI"><a href="#" wicket:id="policies"><i class="fa fa-list"></i>Policies</a></li>
+                <li wicket:id="securityquestionsLI"><a href="#" wicket:id="securityquestions"><i class="fa fa-question"></i>Security Questions</a></li>
+                <li wicket:id="workflowLI"><a href="#" wicket:id="workflow"><i class="fa fa-share-alt"></i>Workflow</a></li>
+                <li wicket:id="logsLI"><a href="#" wicket:id="logs"><i class="fa fa-file-text-o"></i>Logs</a></li>
+                <li wicket:id="layoutsLI"><a href="#" wicket:id="layouts"><i class="fa fa-object-ungroup"></i>Layouts</a></li>
+                <li wicket:id="typesLI"><a href="#" wicket:id="types"><i class="fa fa-wrench"></i><wicket:message key="types"/></a></li>
+                <li wicket:id="notificationsLI"><a href="#" wicket:id="notifications"><i class="fa fa-envelope-o"></i>Notifications</a></li>
+                <li wicket:id="parametersLI"><a href="#" wicket:id="parameters"><i class="fa fa-cog"></i>Parameters</a></li>
+              </ul>
+            </li>
+            <li wicket:id="extensionsLI" class="treeview">
+              <a href="#"><i class="fa fa-puzzle-piece"></i><span>Extensions</span> <i class="fa fa-angle-left pull-right"></i></a>
+              <ul class="treeview-menu" wicket:id="extPages">
+                <li wicket:id="extPageLI">
+                  <a href="#" wicket:id="extPage"><i wicket:id="extPageIcon"></i><span wicket:id="extPageLabel"/></a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+      </aside>
+
+      <div id="main-content" class="content-wrapper basepage-content">
+        <wicket:child />
+      </div>
+
+      <footer class="main-footer block-footer">
+        Apache Syncope <label wicket:id="version"/><br/>
+        <strong>Copyright &copy; 2010–<span id="spanYear"></span> 
+          <a href="http://www.apache.org/" target="_blank">The Apache Software Foundation</a>.</strong>
+        All rights reserved.
+      </footer>
+
+    </div>
+
+    <div id="veil">
+      <img src="img/busy.gif"/>
+    </div>
+
+    <script type="text/javascript">
+      $('#spanYear').html(new Date().getFullYear());
+    </script>
+  </body>
+</html>

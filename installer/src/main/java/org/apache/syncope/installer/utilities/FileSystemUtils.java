@@ -29,6 +29,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URL;
+import java.nio.charset.Charset;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -51,6 +53,17 @@ public class FileSystemUtils {
         final File directory = new File(directoryPath);
         if (!directory.exists()) {
             directory.mkdirs();
+        }
+    }
+
+    public void copyFile(final String sourceFilePath, final String targetFilePath) {
+        try {
+            FileUtils.copyFile(new File(sourceFilePath), new File(targetFilePath));
+        } catch (final IOException ex) {
+            final String errorMessage =
+                    "Error copying file " + sourceFilePath + " to " + targetFilePath;
+            handler.emitError(errorMessage, errorMessage);
+            InstallLog.getInstance().error(errorMessage);
         }
     }
 
@@ -96,6 +109,18 @@ public class FileSystemUtils {
         }
     }
 
+    public String readFile(final File file) {
+        String content = "";
+        try {
+            content = FileUtils.readFileToString(file);
+        } catch (IOException ex) {
+            final String errorMessage = "Error reading file " + file.getAbsolutePath() + ": " + ex.getMessage();
+            handler.emitError(errorMessage, errorMessage);
+            InstallLog.getInstance().error(errorMessage);
+        }
+        return content;
+    }
+
     public void appendToFile(final File file, final String content) {
         try {
             if (!file.exists()) {
@@ -122,7 +147,7 @@ public class FileSystemUtils {
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             transformer.transform(new DOMSource(doc),
-                    new StreamResult(new OutputStreamWriter(out, "UTF-8")));
+                    new StreamResult(new OutputStreamWriter(out, Charset.forName("UTF-8"))));
         } finally {
             IOUtils.closeQuietly(out);
         }
@@ -130,5 +155,19 @@ public class FileSystemUtils {
 
     public static void delete(final File file) {
         FileUtils.deleteQuietly(file);
+    }
+
+    public void copyFileFromResources(final String filePath,
+            final String destination, final AbstractUIProcessHandler handler) {
+
+        try {
+            final URL url = getClass().getResource(filePath);
+            final File dest = new File(destination);
+            FileUtils.copyURLToFile(url, dest);
+        } catch (IOException ex) {
+            final String errorMessage = "Error copy file " + filePath;
+            handler.emitError(errorMessage, errorMessage);
+            InstallLog.getInstance().error(errorMessage);
+        }
     }
 }

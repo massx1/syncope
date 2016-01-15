@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<routes>
+  
+  <route id="createUser">
+    <from uri="direct:createUser"/>
+    <setProperty propertyName="actual">
+      <simple>${body}</simple>
+    </setProperty>
+    <doTry>
+      <bean ref="uwfAdapter" method="create(${body},${property.disablePwdPolicyCheck},
+                                     ${property.enabled},${property.storePassword})"/>
+      <process ref="userCreateProcessor"/>
+      <to uri="direct:createPort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:createPort"/>
+      </doCatch>
+    </doTry>
+  </route> 
+       
+  <route id="updateUser">
+    <from uri="direct:updateUser"/>
+    <setProperty propertyName="actual">
+      <simple>${body}</simple>
+    </setProperty>
+    <doTry>
+      <bean ref="uwfAdapter" method="update(${body})"/>
+      <process ref="userUpdateProcessor"/>
+      <to uri="direct:updatePort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:updatePort"/>
+      </doCatch>
+    </doTry>
+  </route>
+                
+  <route id="updateUserInSync">
+    <from uri="direct:updateUserInSync"/>            
+    <doTry>
+      <bean ref="uwfAdapter" method="update(${body})"/>
+      <to uri="direct:userInSync"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:updateInSyncPort"/>
+      </doCatch>
+    </doTry>
+  </route>
+        
+  <route id="userInSync">
+    <from uri="direct:userInSync"/>
+    <process ref="userSetStatusInSyncProcessor"/>
+    <process ref="userUpdateInSyncProcessor"/>
+    <to uri="direct:updateInSyncPort"/>
+  </route>
+  
+  <route id="deleteUser">
+    <from uri="direct:deleteUser"/>
+    <doTry>
+      <process ref="userDeleteProcessor"/>
+      <bean ref="uwfAdapter" method="delete(${body})"/>
+      <setBody>
+        <simple>${property.statuses}</simple>
+      </setBody>
+      <to uri="direct:deletePort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:deletePort"/>
+      </doCatch>
+    </doTry>
+  </route>
+        
+  <route id="unlinkUser">
+    <from uri="direct:unlinkUser"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="update(${body})"/>
+      <setBody>
+        <simple>${body.getResult.getKey}</simple>
+      </setBody>
+      <to uri="direct:unlinkPort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:unlinkPort"/>
+      </doCatch>
+    </doTry>            
+  </route>
+        
+  <route id="linkUser">
+    <from uri="direct:linkUser"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="update(${body})"/>
+      <setBody>
+        <simple>${body.getResult.getKey}</simple>
+      </setBody>
+      <to uri="direct:linkPort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:linkPort"/>
+      </doCatch>
+    </doTry>            
+  </route>
+        
+  <route id="activateUser">
+    <from uri="direct:activateUser"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="activate(${body}, ${property.token})"/>
+      <to uri="direct:userStatusPropagation"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:statusPort"/>
+      </doCatch>
+    </doTry>    
+  </route>
+  
+  <route id="reactivateUser">
+    <from uri="direct:reactivateUser"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="reactivate(${body})"/>
+      <to uri="direct:userStatusPropagation"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:statusPort"/>
+      </doCatch>
+    </doTry>    
+  </route>
+  
+  <route id="suspendUser">
+    <from uri="direct:suspendUser"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="suspend(${body})"/>
+      <to uri="direct:userStatusPropagation"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:statusPort"/>
+      </doCatch>
+    </doTry>  
+  </route>
+        
+  <route id="userStatusPropagation">
+    <from uri="direct:userStatusPropagation"/>            
+    <process ref="userStatusPropagationProcessor"/>
+    <to uri="direct:statusPort"/> 
+  </route>
+    
+  <route id="provisionUser">
+    <from uri="direct:provisionUser"/>            
+    <process ref="userProvisionProcessor"/>
+    <to uri="direct:provisionPort"/>              
+  </route>
+                
+  <route id="deprovisionUser">
+    <from uri="direct:deprovisionUser"/>            
+    <process ref="userDeprovisionProcessor"/>
+    <to uri="direct:deprovisionPort"/>              
+  </route>
+    
+  <route id="internalSuspendUser">
+    <from uri="direct:internalSuspendUser"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="internalSuspend(${body})"/>
+      <process ref="userInternalSuspendProcessor"/>
+      <to uri="direct:internalSuspendUserPort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:internalSuspendUserPort"/>
+      </doCatch>
+    </doTry>  
+  </route>
+        
+  <route id="requestPwdReset">
+    <from uri="direct:requestPwdReset"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="requestPasswordReset(${body})"/>
+      <to uri="direct:requestPwdResetPort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:requestPwdResetPort"/>
+      </doCatch>
+    </doTry>  
+  </route>
+  
+  <route id="confirmPwdReset">
+    <from uri="direct:confirmPwdReset"/>
+    <doTry>
+      <bean ref="uwfAdapter" method="confirmPasswordReset(${property.key},${property.token},${property.password})"/>
+      <process ref="userConfirmPwdResetProcessor"/>
+      <to uri="direct:confirmPwdResetPort"/>
+      <doCatch>        
+        <exception>java.lang.RuntimeException</exception>
+        <handled>
+          <constant>false</constant>
+        </handled>
+        <to uri="direct:confirmPwdResetPort"/>
+      </doCatch>
+    </doTry>
+  </route>
+  
+</routes>

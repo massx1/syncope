@@ -21,7 +21,7 @@ under the License.
                      xmlns:izpack="http://izpack.org/schema/installation"
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                      xsi:schemaLocation="http://izpack.org/schema/installation
-                     http://izpack.org/schema/5.0/izpack-installation-5.0.xsd">
+                                         http://izpack.org/schema/5.0/izpack-installation-5.0.xsd">
   
   <info>
     <appname>Apache Syncope</appname>
@@ -33,7 +33,7 @@ under the License.
     <javaversion>${targetJdk}</javaversion>
   </info>
   
-  <guiprefs resizable="no" width="800" height="600">
+  <guiprefs resizable="no" width="850" height="600">    
     <modifier key="useButtonIcons" value="yes"/>
     <modifier key="useLabelIcons" value="no"/>
     <modifier key="labelGap" value="2"/>
@@ -55,12 +55,11 @@ under the License.
     <variable name="InstallerFrame.logfilePath" value="Default"/>
     <variable name="WELCOME_TEXT" value="Apache Syncope Installer"/>
     <variable name="WELCOME_VERSION" value="${appversion}"/>
-    <variable name="TargetPanel.dir.unix" value="/tmp/syncope"/>
+    <variable name="TargetPanel.dir.unix" value="/var/tmp/syncope"/>
     <variable name="TargetPanel.dir.windows" value="C:\Program Files"/>
   </variables>
   
   <dynamicvariables>
-    <variable name="JDK_HOME" value="${izpack.version}"/>
     <variable name="TARGET" value="${project.build.directory}"/>
   </dynamicvariables>
   
@@ -68,6 +67,11 @@ under the License.
     
     <condition type="variable" id="mvn.choice.proxy">
       <name>mvn.proxy</name>
+      <value>true</value>
+    </condition>
+    
+    <condition type="variable" id="options.choice.activiti">
+      <name>options.activiti.workflow.adapter</name>
       <value>true</value>
     </condition>
     
@@ -126,7 +130,7 @@ under the License.
   </resources>
   
   <jar src="../syncope-installer-@{syncope.version}.jar" stage="install"/>
-  <jar src="lib/commons-logging-@{commons.logging.version}.jar"/>
+  <jar src="lib/commons-logging-@{commons-logging.version}.jar"/>
   <jar src="lib/commons-codec-@{commons-codec.version}.jar"/>
   <jar src="lib/commons-io-2.4.jar"/>
   <jar src="lib/httpclient-@{httpclient.version}.jar"/>
@@ -150,6 +154,8 @@ under the License.
     <panel classname="UserInputPanel" id="archetype">
       <validator classname="org.apache.syncope.installer.validators.ArchetypeValidator"/>
     </panel>
+    <panel classname="UserInputPanel" id="syncope_options"/>
+    
     <panel classname="UserInputPanel" id="persistence"/>
     <panel classname="UserInputPanel" id="persistence_advanced">
       <validator classname="org.apache.syncope.installer.validators.PersistenceValidator"/>
@@ -170,6 +176,6 @@ under the License.
     <pack name="Apache Syncope" required="yes">
       <description>Apache Syncope Installer</description>
     </pack>
-  </packs>
+  </packs> 
   
 </izpack:installation>

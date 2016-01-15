@@ -30,7 +30,7 @@ under the License.
 
     <section name="Security Advisories">
       <p>This page lists all security vulnerabilities fixed in released versions of Apache Syncope.</p>
-      <p>Please note that binary patches are never provided. If you need to apply a source code patch, use the <a href="building.html">building instructions</a> or <a href="https://cwiki.apache.org/confluence/display/SYNCOPE/Create+a+new+Syncope+project">re-generate your Maven project</a> from published archetype.</p>
+      <p>Please note that binary patches are never provided. If you need to apply a source code patch, use the <a href="building.html">building instructions</a> or <a href="docs/getting-started.html#create-project">re-generate your Maven project</a> from published archetype.</p>
 
       <p>If you want to report a vulnerability, please follow <a href="http://www.apache.org/security/">the procedure</a>.</p>
 
@@ -63,8 +63,8 @@ under the License.
 
       <subsection name="CVE-2014-0111: Remote code execution by an authenticated administrator">	
         <p>In the various places in which Apache Commons JEXL expressions are allowed (derived schema definition, 
-          user / role templates, account links of resource mappings) a malicious administrator can inject Java code 
-          that can be executed remotely by the JEE container running the Apache Syncope core.</p>
+          user / group templates, connObjectLinks of resource mappings) a malicious administrator can inject Java code 
+          that can be executed remotely by the Java EE container running the Apache Syncope core.</p>
 
         <p>
           <b>Affects</b>

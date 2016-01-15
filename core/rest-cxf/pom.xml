@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.apache.syncope</groupId>
+    <artifactId>syncope-core</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+  </parent>
+
+  <name>Apache Syncope Core REST CXF</name>
+  <description>Apache Syncope Core REST CXF</description>
+  <groupId>org.apache.syncope.core</groupId>
+  <artifactId>syncope-core-rest-cxf</artifactId>
+  <packaging>jar</packaging>
+  
+  <properties>
+    <rootpom.basedir>${basedir}/../..</rootpom.basedir>
+  </properties>
+
+  <dependencies>
+    <dependency> 
+      <groupId>javax.servlet</groupId> 
+      <artifactId>javax.servlet-api</artifactId> 
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jpa_2.0_spec</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-orm</artifactId>
+    </dependency>      
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-config</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-joda</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>com.fasterxml.jackson.jaxrs</groupId>
+      <artifactId>jackson-jaxrs-json-provider</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-afterburner</artifactId>
+    </dependency>
+      
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-extension-search</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-service-description</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-client</artifactId>
+    </dependency> 
+    <dependency>
+      <groupId>org.apache.syncope.common</groupId>
+      <artifactId>syncope-common-rest-api</artifactId>
+      <version>${project.version}</version>
+      <classifier>javadoc</classifier>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.syncope.core</groupId>
+      <artifactId>syncope-core-logic</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.syncope.common</groupId>
+      <artifactId>syncope-common-rest-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+            
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>jquery</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>jquery-ui</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>jquery-ui-themes</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>highlightjs</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>            
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+    </plugins>
+    
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+  
+  <profiles>
+    <profile>
+      <id>site</id>
+      
+      <build>        
+        <plugins>
+          <!-- 1. Transform WADL into 2 HTML pages -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>xml-maven-plugin</artifactId>
+            <inherited>true</inherited>
+            <executions>
+              <execution>
+                <id>wadl2html</id>
+                <phase>pre-site</phase>
+                <goals>
+                  <goal>transform</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <transformationSets>
+                <transformationSet>
+                  <dir>${basedir}/../../common/rest-api/target/generated/wadl</dir>
+                  <includes>
+                    <include>application.wadl</include>
+                  </includes>
+                  <outputDir>${project.build.directory}/generated/wadl</outputDir>
+                  <stylesheet>${basedir}/src/main/resources/wadl2html/identity.xsl</stylesheet>
+                  <outputProperties>
+                    <outputProperty>
+                      <name>indent</name>
+                      <value>yes</value>
+                    </outputProperty>
+                  </outputProperties>
+                  <fileMappers>
+                    <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.RegExpFileMapper">
+                      <pattern>^.*$</pattern>
+                      <replacement>syncope.wadl</replacement>
+                    </fileMapper>
+                  </fileMappers>
+                </transformationSet>
+                <transformationSet>
+                  <dir>${project.build.directory}/generated/wadl</dir>
+                  <includes>
+                    <include>syncope.wadl</include>
+                  </includes>
+                  <outputDir>${project.build.directory}/generated/wadl</outputDir>
+                  <stylesheet>${basedir}/src/main/resources/wadl2html/index.xsl</stylesheet>
+                  <parameters>
+                    <parameter>
+                      <name>contextPath</name>
+                      <value>..</value>
+                    </parameter>
+                  </parameters>
+                  <outputProperties>
+                    <outputProperty>
+                      <name>indent</name>
+                      <value>yes</value>
+                    </outputProperty>
+                  </outputProperties>
+                  <fileMappers>
+                    <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.RegExpFileMapper">
+                      <pattern>^.*$</pattern>
+                      <replacement>index.html</replacement>
+                    </fileMapper>
+                  </fileMappers>
+                </transformationSet>
+                <transformationSet>
+                  <dir>${project.build.directory}/generated/wadl</dir>
+                  <includes>
+                    <include>syncope.wadl</include>
+                  </includes>
+                  <outputDir>${project.build.directory}/generated/wadl</outputDir>
+                  <stylesheet>${basedir}/src/main/resources/wadl2html/schema.xsl</stylesheet>
+                  <parameters>
+                    <parameter>
+                      <name>contextPath</name>
+                      <value>..</value>
+                    </parameter>
+                    <parameter>
+                      <name>schema-position</name>
+                      <value>1</value>
+                    </parameter>
+                    <parameter>
+                      <name>schema-prefix</name>
+                      <value>syncope1</value>
+                    </parameter>
+                  </parameters>
+                  <outputProperties>
+                    <outputProperty>
+                      <name>indent</name>
+                      <value>yes</value>
+                    </outputProperty>
+                  </outputProperties>
+                  <fileMappers>
+                    <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.RegExpFileMapper">
+                      <pattern>^.*$</pattern>
+                      <replacement>schema_1_syncope1.html</replacement>
+                    </fileMapper>
+                  </fileMappers>
+                </transformationSet>
+              </transformationSets>
+            </configuration>
+          </plugin>
+          
+          <!-- 2. Fix external references -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <inherited>true</inherited>
+            <executions>
+              <execution>
+                <id>copy-rest-reference-to-site</id>
+                <phase>pre-site</phase>
+                <configuration>
+                  <target>
+                    <replace file="${project.build.directory}/generated/wadl/index.html" token="../webjars/jquery/$/jquery.min.js" value="https://code.jquery.com/jquery-${jquery.version}.min.js" />
+                    <replace file="${project.build.directory}/generated/wadl/index.html" token="../webjars/jquery-ui/$/jquery-ui.min.js" value="http://code.jquery.com/ui/${jquery-ui.version}/jquery-ui.min.js" />
+                    <replace file="${project.build.directory}/generated/wadl/index.html" token="../webjars/jquery-ui-themes/$/smoothness/jquery-ui.min.css" value="https://code.jquery.com/ui/${jquery-ui.version}/themes/smoothness/jquery-ui.css" />      
+
+                    <replace file="${project.build.directory}/generated/wadl/schema_1_syncope1.html" token="../webjars/highlightjs/$/highlight.min.js" value="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/${highlightjs.version}/highlight.min.js" />
+                    <replace file="${project.build.directory}/generated/wadl/schema_1_syncope1.html" token="../webjars/highlightjs/$/styles/default.min.css" value="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/${highlightjs.version}/styles/default.min.css" />      
+
+                    <copy todir="${site.deploymentBaseDir}/rest/2.0">
+                      <fileset dir="${project.build.directory}/generated/wadl" />
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

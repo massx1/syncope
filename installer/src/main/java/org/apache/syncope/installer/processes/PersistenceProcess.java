@@ -22,11 +22,11 @@ import org.apache.syncope.installer.utilities.FileSystemUtils;
 import com.izforge.izpack.panels.process.AbstractUIProcessHandler;
 import java.io.File;
 import org.apache.syncope.installer.enums.DBs;
-import org.apache.syncope.installer.files.OrmXml;
-import org.apache.syncope.installer.files.PersistenceProperties;
+import org.apache.syncope.installer.files.MasterProperties;
+import org.apache.syncope.installer.files.ProvisioningProperties;
 import org.apache.syncope.installer.utilities.InstallLog;
 
-public class PersistenceProcess {
+public class PersistenceProcess extends BaseProcess {
 
     private String installPath;
 
@@ -42,10 +42,10 @@ public class PersistenceProcess {
 
     private boolean mysqlInnoDB;
 
-    private String oracleTableSpace;
+    private String schema;
 
+    @Override
     public void run(final AbstractUIProcessHandler handler, final String[] args) {
-
         installPath = args[0];
         artifactId = args[1];
         dbSelected = DBs.fromDbName(args[2]);
@@ -53,55 +53,63 @@ public class PersistenceProcess {
         persistenceUser = args[4];
         persistencePassword = args[5];
         mysqlInnoDB = Boolean.valueOf(args[6]);
-        oracleTableSpace = args[7];
+        schema = args[7];
+
+        final StringBuilder masterProperties = new StringBuilder(MasterProperties.HEADER);
+        setSyncopeInstallDir(installPath, artifactId);
 
         final FileSystemUtils fileSystemUtils = new FileSystemUtils(handler);
+        final File provisioningFile = new File(
+                syncopeInstallDir + PROPERTIES.getProperty("provisioningPropertiesFile"));
 
-        final StringBuilder persistenceProperties = new StringBuilder(PersistenceProperties.HEADER);
-
-        handler.logOutput("Configure persistence file according to " + dbSelected + " properties", true);
-        InstallLog.getInstance().info("Configure persistence file according to " + dbSelected + " properties");
+        final String provisioningFileString = fileSystemUtils.readFile(provisioningFile);
+        final StringBuilder provisioningProperties = new StringBuilder(
+                provisioningFileString.substring(0, provisioningFileString.indexOf("quartz.jobstore")));
+        handler.logOutput("Configure persistence for " + dbSelected, false);
+        InstallLog.getInstance().info("Configure persistence for " + dbSelected);
 
         switch (dbSelected) {
             case POSTGRES:
-                persistenceProperties.append(String.format(
-                        PersistenceProperties.POSTGRES, persistenceUrl, persistenceUser, persistencePassword));
+                provisioningProperties.append(ProvisioningProperties.POSTGRES);
+                masterProperties.append(String.format(
+                        MasterProperties.POSTGRES, persistenceUrl, persistenceUser, persistencePassword));
                 break;
+
             case MYSQL:
-                persistenceProperties.append(String.format(
-                        PersistenceProperties.MYSQL, persistenceUrl, persistenceUser, persistencePassword));
-                if (mysqlInnoDB) {
-                    persistenceProperties.append(PersistenceProperties.MYSQL_QUARTZ_INNO_DB);
-                } else {
-                    persistenceProperties.append(PersistenceProperties.MYSQL_QUARTZ);
-                }
+                provisioningProperties.append(ProvisioningProperties.MYSQL);
+                provisioningProperties.append(mysqlInnoDB
+                        ? ProvisioningProperties.MYSQL_QUARTZ_INNO_DB
+                        : ProvisioningProperties.MYSQL_QUARTZ);
+                masterProperties.append(String.format(
+                        MasterProperties.MYSQL, persistenceUrl, persistenceUser, persistencePassword));
                 break;
+
             case MARIADB:
-                persistenceProperties.append(String.format(
-                        PersistenceProperties.MARIADB, persistenceUrl, persistenceUser, persistencePassword));
+                provisioningProperties.append(ProvisioningProperties.MARIADB);
+                masterProperties.append(String.format(
+                        MasterProperties.MARIADB, persistenceUrl, persistenceUser, persistencePassword));
                 break;
+
             case ORACLE:
-                persistenceProperties.append(String.format(
-                        PersistenceProperties.ORACLE, persistenceUrl, persistenceUser, persistencePassword,
-                        oracleTableSpace));
-                writeOrmFile(fileSystemUtils, OrmXml.ORACLE_ORM);
+                provisioningProperties.append(ProvisioningProperties.ORACLE);
+                masterProperties.append(String.format(
+                        MasterProperties.ORACLE, schema, persistenceUrl, persistenceUser, persistencePassword));
                 break;
+
             case SQLSERVER:
-                persistenceProperties.append(String.format(
-                        PersistenceProperties.SQLSERVER, persistenceUrl, persistenceUser, persistencePassword));
-                writeOrmFile(fileSystemUtils, OrmXml.SQLSERVER_ORM);
+                provisioningProperties.append(ProvisioningProperties.SQLSERVER);
+                masterProperties.append(String.format(
+                        MasterProperties.SQLSERVER, schema, persistenceUrl, persistenceUser, persistencePassword));
                 break;
+
+            default:
         }
 
         fileSystemUtils.writeToFile(new File(
-                installPath + "/" + artifactId + PersistenceProperties.PATH), persistenceProperties.toString());
-
-    }
-
-    private void writeOrmFile(final FileSystemUtils fileSystemUtils, final String content) {
-        fileSystemUtils.createDirectory(
-                installPath + File.separator + artifactId + OrmXml.PATH_DIR);
-        fileSystemUtils.writeToFile(
-                new File(installPath + File.separator + artifactId + OrmXml.PATH_COMPLETE), content);
+                syncopeInstallDir + PROPERTIES.getProperty("provisioningPropertiesFile")),
+                provisioningProperties.toString());
+        fileSystemUtils.writeToFile(new File(
+                syncopeInstallDir + PROPERTIES.getProperty("masterPropertiesFile")),
+                masterProperties.toString());
     }
 }
