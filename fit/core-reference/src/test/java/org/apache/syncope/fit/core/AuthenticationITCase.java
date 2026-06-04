@@ -20,6 +20,7 @@ package org.apache.syncope.fit.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -335,13 +336,7 @@ public class AuthenticationITCase extends AbstractITCase {
 
         assertEquals(0, USER_SERVICE.read(userKey).getFailedLogins());
 
-        // authentications failed ...
-        try {
-            CLIENT_FACTORY.create(userTO.getUsername(), "wrongpwd1");
-            fail("This should not happen");
-        } catch (NotAuthorizedException e) {
-            assertNotNull(e);
-        }
+        // /odd has an account policy with maxAuthenticationAttempts = 3.
         try {
             CLIENT_FACTORY.create(userTO.getUsername(), "wrongpwd1");
             fail("This should not happen");
@@ -355,9 +350,10 @@ public class AuthenticationITCase extends AbstractITCase {
             assertNotNull(e);
         }
 
-        assertEquals(3, USER_SERVICE.read(userKey).getFailedLogins());
+        userTO = USER_SERVICE.read(userTO.getKey());
+        assertEquals(2, userTO.getFailedLogins().intValue());
+        assertFalse(userTO.isSuspended());
 
-        // last authentication before suspension
         try {
             CLIENT_FACTORY.create(userTO.getUsername(), "wrongpwd1");
             fail("This should not happen");
@@ -369,7 +365,7 @@ public class AuthenticationITCase extends AbstractITCase {
         assertNotNull(userTO);
         assertNotNull(userTO.getFailedLogins());
         assertEquals(3, userTO.getFailedLogins().intValue());
-        assertEquals("suspended", userTO.getStatus());
+        assertTrue(userTO.isSuspended());
 
         // Access with correct credentials should fail as user is suspended
         try {
